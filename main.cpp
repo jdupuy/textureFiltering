@@ -655,6 +655,7 @@ void on_mouse_wheel(GLint wheel, GLint direction, GLint x, GLint y) {
 	if(1 == TwMouseWheel(wheel))
 		return;
 #endif // _ANT_ENABLE
+	cameraWorld.TranslateLocal(Vector3(0,0,float(direction)*0.15f));
 }
 
 
