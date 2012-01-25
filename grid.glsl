@@ -21,8 +21,8 @@ void main() {
 	              uCameraWorldAxis[2]
 	            + uTanFov.x * iPosition.x * uCameraWorldAxis[0]
 	            + uTanFov.y * iPosition.y * uCameraWorldAxis[1]);
-	float t     = -uCameraWorldPosition.z / rayDir.z;
-	oTexCoord   = uCameraWorldPosition.xy + t * rayDir.xy;
+	float t     = -uCameraWorldPosition.y / rayDir.y;
+	oTexCoord   = uCameraWorldPosition.xz + t * rayDir.xz;
 
 	gl_Position = uModelViewProjection * vec4(oTexCoord.x,
 	                                          0.0,
@@ -30,7 +30,7 @@ void main() {
 	                                          1.0);
 
 	// scale texcoord
-	oTexCoord *= uTileSize;
+//	oTexCoord *= uInvTileSize;
 }
 
 #endif
@@ -42,6 +42,7 @@ layout(location=0) out vec4 oColour;
 
 void main() {
 	oColour = texture(sDiffuse, iTexCoord);
+//	oColour = vec4(1.0);
 }
 
 #endif
