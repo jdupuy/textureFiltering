@@ -7,4 +7,6 @@ http://1.bp.blogspot.com/_ys3TscJ3Jiw/S6pbQhQeZUI/AAAAAAAAADM/9KLp6Yd9sQE/s320/c
 grass.tga
 http://www.mptextures.com/textures/grass03.jpg
 
+wood.tga
+http://www.xanadu-fx.com/tiles/plaster/index.html
 
