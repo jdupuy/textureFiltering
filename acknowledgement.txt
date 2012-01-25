@@ -1,0 +1,10 @@
+Texture sources
+---------------
+
+chessboard.tga
+http://1.bp.blogspot.com/_ys3TscJ3Jiw/S6pbQhQeZUI/AAAAAAAAADM/9KLp6Yd9sQE/s320/chess16-2.gif
+
+grass.tga
+http://www.mptextures.com/textures/grass03.jpg
+
+
