@@ -1,4 +1,4 @@
-#version 420 core
+#version 330 core
 
 uniform sampler2D sDiffuse;
 
@@ -13,7 +13,7 @@ uniform float uInvTileSize;
 #ifdef _VERTEX_
 
 layout(location=0) in vec2 iPosition; // NDC position
-layout(location=0) out vec2 oTexCoord;
+out vec2 texCoord;
 
 void main() {
 	// compute world space ray dir
@@ -22,26 +22,26 @@ void main() {
 	            + uTanFov.x * iPosition.x * uCameraWorldAxis[0]
 	            + uTanFov.y * iPosition.y * uCameraWorldAxis[1]);
 	float t     = -uCameraWorldPosition.y / rayDir.y;
-	oTexCoord   = uCameraWorldPosition.xz + t * rayDir.xz;
+	texCoord    = uCameraWorldPosition.xz + t * rayDir.xz;
 
-	gl_Position = uModelViewProjection * vec4(oTexCoord.x,
+	gl_Position = uModelViewProjection * vec4(texCoord.x,
 	                                          0.0,
-	                                          oTexCoord.y,
+	                                          texCoord.y,
 	                                          1.0);
 
 	// scale texcoord
-//	oTexCoord *= uInvTileSize;
+	texCoord *= uInvTileSize;
 }
 
 #endif
 
 #ifdef _FRAGMENT_
 
-layout(location=0) in vec2 iTexCoord;
+in vec2 texCoord;
 layout(location=0) out vec4 oColour;
 
 void main() {
-	oColour = texture(sDiffuse, iTexCoord);
+	oColour = texture(sDiffuse, texCoord);
 //	oColour = vec4(1.0);
 }
 

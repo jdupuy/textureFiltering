@@ -58,6 +58,7 @@ enum {
 
 	// textures
 	TEXTURE_CHESSBOARD = 0,
+	TEXTURE_WOOD,
 	TEXTURE_GRASS,
 	TEXTURE_COUNT,
 
@@ -74,7 +75,7 @@ GLuint *samplers     = NULL;
 GLuint *programs     = NULL;
 
 // Tools
-Affine invCameraWorld       = Affine::Translation(Vector3(0,-2,-10));
+Affine cameraWorld          = Affine::Translation(Vector3(0,2,10));
 Projection cameraProjection = Projection::Perspective(FOVY,
                                                       1.0f,
                                                       0.2f,
@@ -83,15 +84,16 @@ Projection cameraProjection = Projection::Perspective(FOVY,
 bool mouseLeft  = false;
 bool mouseRight = false;
 
-float tileSize = 1.0f;
-GLuint gridSize = 4;
+GLfloat deltaTicks = 0.0f;
+GLfloat tileSize   = 1.0f; // controls the size of the tile
+GLuint gridSize    = 8;    // controls the size of the triangles of the grid
 GLuint gridVertexCount = 0;
 GLuint gridIndexCount  = 0;
-GLuint activeTexture   = TEXTURE_GRASS;
-GLuint activeSampler   = SAMPLER_ANISOTROPICX16;
+GLuint activeTexture   = TEXTURE_WOOD; // displayed texture
+GLuint activeSampler   = SAMPLER_TRILINEAR; // texture filtering method
 
 #ifdef _ANT_ENABLE
-
+float speed = 0.0f;
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -160,6 +162,12 @@ void build_grid() {
 	gridIndexCount  = indexes.size();
 }
 
+void set_tile_size() {
+	glProgramUniform1f(programs[PROGRAM_RENDER],
+	                   glGetUniformLocation(programs[PROGRAM_RENDER],
+	                                         "uInvTileSize"),
+	                   1.0f/tileSize);
+}
 
 void set_texture() {
 	glProgramUniform1i(programs[PROGRAM_RENDER],
@@ -220,6 +228,45 @@ void build_texture(const fw::Tga& tga, GLuint textureName) {
 
 #ifdef _ANT_ENABLE
 
+static void TW_CALL toggle_fullscreen(void *data)
+{
+	// toggle fullscreen
+	glutFullScreenToggle();
+}
+
+static void TW_CALL set_filtering_mode_cb(const void *value, void *clientData)
+{
+	activeSampler = *(const GLint *)value;
+	set_sampler();
+}
+
+static void TW_CALL get_filtering_mode_cb(void *value, void *clientData)
+{
+	*(GLint *)value = activeSampler;
+}
+
+static void TW_CALL set_texture_cb(const void *value, void *clientData)
+{
+	activeTexture = *(const GLint *)value;
+	set_texture();
+}
+
+static void TW_CALL get_texture_cb(void *value, void *clientData)
+{
+	*(GLint *)value = activeTexture;
+}
+
+static void TW_CALL set_tile_size_cb(const void *value, void *clientData)
+{
+	tileSize = *(const GLfloat *)value;
+	set_tile_size();
+}
+
+static void TW_CALL get_tile_size_cb(void *value, void *clientData)
+{
+	*(GLfloat *)value = tileSize;
+}
+
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -236,13 +283,15 @@ void on_init() {
 	glGenBuffers(BUFFER_COUNT, buffers);
 	glGenVertexArrays(VERTEX_ARRAY_COUNT, vertexArrays);
 	glGenTextures(TEXTURE_COUNT, textures);
-//	glGenSamplers(SAMPLER_COUNT, samplers);
+	glGenSamplers(SAMPLER_COUNT, samplers);
 	for(GLuint i=0; i<PROGRAM_COUNT;++i)
 		programs[i] = glCreateProgram();
 
 	// configure texture
 	glActiveTexture(GL_TEXTURE0+TEXTURE_CHESSBOARD);
 		build_texture(fw::Tga("chessboard.tga"), TEXTURE_CHESSBOARD);
+	glActiveTexture(GL_TEXTURE0+TEXTURE_WOOD);
+		build_texture(fw::Tga("wood.tga"), TEXTURE_WOOD);
 	glActiveTexture(GL_TEXTURE0+TEXTURE_GRASS);
 		build_texture(fw::Tga("grass.tga"), TEXTURE_GRASS);
 
@@ -259,12 +308,12 @@ void on_init() {
 	                    GL_LINEAR);
 	glSamplerParameteri(samplers[SAMPLER_BILINEAR],
 	                    GL_TEXTURE_MIN_FILTER,
-	                    GL_NEAREST_MIPMAP_LINEAR);
+	                    GL_LINEAR_MIPMAP_NEAREST);
 
 	glSamplerParameteri(samplers[SAMPLER_TRILINEAR],
 	                    GL_TEXTURE_MAG_FILTER,
 	                    GL_LINEAR);
-	glSamplerParameteri(samplers[SAMPLER_BILINEAR],
+	glSamplerParameteri(samplers[SAMPLER_TRILINEAR],
 	                    GL_TEXTURE_MIN_FILTER,
 	                    GL_LINEAR_MIPMAP_LINEAR);
 
@@ -311,15 +360,13 @@ void on_init() {
 	// set sampler
 	set_sampler();
 
-	// configure buffer objects
-	build_grid();
-
 	// configure programs
 	fw::build_glsl_program(programs[PROGRAM_RENDER],
 	                       "grid.glsl",
 	                       "",
 	                       GL_TRUE);
 	set_texture();
+	set_tile_size();
 
 	glEnable(GL_DEPTH_TEST);
 //	glEnable(GL_CULL_FACE);
@@ -334,17 +381,68 @@ void on_init() {
 	// Create a new bar
 	TwBar* menuBar = TwNewBar("menu");
 	TwDefine("menu size='250 150'");
-//	TwAddButton( menuBar,
-//	             "fullscreen",
-//	             &toggle_fullscreen,
-//	             NULL,
-//	             "label='toggle fullscreen'");
-	TwAddVarRO( menuBar,
-	            "tileSize",
+
+	TwAddVarRO(menuBar,
+	           "speed (ms)",
+	           TW_TYPE_FLOAT,
+	           &speed,
+	           "");
+
+	TwAddButton( menuBar,
+	             "fullscreen",
+	             &toggle_fullscreen,
+	             NULL,
+	             "label='toggle fullscreen'");
+
+	TwAddSeparator( menuBar,
+	                "options",
+	                NULL );
+
+	TwAddVarCB( menuBar,
+	            "tileFactor",
 	            TW_TYPE_FLOAT,
-	            &tileSize,
-	            "");
+	            &set_tile_size_cb,
+	            &get_tile_size_cb,
+	            NULL,
+	            "min=0.1 max=500.0 step=0.1");
+
+	TwEnumVal samplerModeEV[] = {
+		{SAMPLER_LINEAR,         "Linear"},
+		{SAMPLER_BILINEAR,       "Bilinear" },
+		{SAMPLER_TRILINEAR,      "Trilinear"},
+		{SAMPLER_ANISOTROPICX2,  "Anisotropic x2"},
+		{SAMPLER_ANISOTROPICX4,  "Anisotropic x4"},
+		{SAMPLER_ANISOTROPICX8,  "Anisotropic x8"},
+		{SAMPLER_ANISOTROPICX16, "Anisotropic x16"}
+	};
+	TwType filterType= TwDefineEnum("Filter", samplerModeEV, 7);
+	TwAddVarCB(menuBar,
+	           "filtering",
+	           filterType,
+	           &set_filtering_mode_cb,
+	           &get_filtering_mode_cb,
+	           NULL,
+	           "help='Change texture filtering method.' ");
+
+	TwEnumVal textureEV[] = {
+		{TEXTURE_CHESSBOARD, "Chessboard"},
+		{TEXTURE_WOOD,       "Wood" },
+		{TEXTURE_GRASS,      "Grass"}
+	};
+	TwType textureType= TwDefineEnum("Texture", textureEV, 3);
+	TwAddVarCB(menuBar,
+	           "texture",
+	           textureType,
+	           &set_texture_cb,
+	           &get_texture_cb,
+	           NULL,
+	           "help='Change tiled texture.' ");
+
+
 #endif // _ANT_ENABLE
+
+	glUseProgram(programs[PROGRAM_RENDER]);
+	glBindVertexArray(vertexArrays[VERTEX_ARRAY_GRID]);
 
 	fw::check_gl_error();
 }
@@ -357,7 +455,7 @@ void on_clean() {
 	glDeleteBuffers(BUFFER_COUNT, buffers);
 	glDeleteVertexArrays(VERTEX_ARRAY_COUNT, vertexArrays);
 	glDeleteTextures(TEXTURE_COUNT, textures);
-//	glDeleteSamplers(SAMPLER_COUNT, samplers);
+	glDeleteSamplers(SAMPLER_COUNT, samplers);
 	for(GLuint i=0; i<PROGRAM_COUNT;++i)
 		glDeleteProgram(programs[i]);
 
@@ -379,14 +477,18 @@ void on_clean() {
 ////////////////////////////////////////////////////////////////////////////////
 // on update cb
 void on_update() {
-	// Global variable
+	// Variables
+	static fw::Timer deltaTimer;
 	GLint windowWidth  = glutGet(GLUT_WINDOW_WIDTH);
 	GLint windowHeight = glutGet(GLUT_WINDOW_HEIGHT);
 	float aspect       = float(windowWidth)/float(windowHeight);
 
+	// stop timing and set delta
+	deltaTimer.Stop();
+	deltaTicks = deltaTimer.Ticks();
 #ifdef _ANT_ENABLE
-
-#endif // _ANT_ENABLE
+	speed = deltaTicks*1000.0f;
+#endif
 
 	// set viewport
 	glViewport(0,0,windowWidth, windowHeight);
@@ -394,18 +496,17 @@ void on_update() {
 	// clear back buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// update transformations
-	Matrix4x4 mvp = cameraProjection.ExtractTransformMatrix()
-	              * invCameraWorld.ExtractTransformMatrix();
-
 	// compute camera's world axis and position
-	Matrix3x3 camAxis = invCameraWorld.GetUnitAxis().Transpose();
-	Matrix4x4 tmp     = invCameraWorld.ExtractInverseTransformMatrix();
-	Vector3 camPos    = Vector3(tmp[3][0], tmp[3][1], tmp[3][2]);
+	Matrix3x3 camAxis = cameraWorld.GetUnitAxis();
+	Vector3 camPos    = cameraWorld.GetPosition();
 	cameraProjection = Projection::Perspective(FOVY,
 	                                           aspect,
 	                                           (abs(camPos[1])+0.01f) * 0.2f,
 	                                           (abs(camPos[1])+0.01f) * 10000.0f);
+
+	// update transformations
+	Matrix4x4 mvp = cameraProjection.ExtractTransformMatrix()
+	              * cameraWorld.ExtractInverseTransformMatrix();
 
 	glProgramUniformMatrix4fv(programs[PROGRAM_RENDER],
 	                          glGetUniformLocation(programs[PROGRAM_RENDER],
@@ -428,28 +529,24 @@ void on_update() {
 //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// render the model
-	glUseProgram(programs[PROGRAM_RENDER]);
-	glBindVertexArray(vertexArrays[VERTEX_ARRAY_GRID]);
 	glDrawElements(GL_TRIANGLES,
 	               gridIndexCount,
 	               GL_UNSIGNED_INT,
 	               FW_BUFFER_OFFSET(0));
-
-//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-//	glDrawArrays( GL_POINTS,
-//	              0,
-//	              gridVertexCount);
-
 
 #ifdef _ANT_ENABLE
 	// back to default vertex array
 	glUseProgram(0);
 	glBindVertexArray(0);
 	TwDraw();
+	glUseProgram(programs[PROGRAM_RENDER]);
+	glBindVertexArray(vertexArrays[VERTEX_ARRAY_GRID]);
 #endif // _ANT_ENABLE
 
 	fw::check_gl_error();
+
+	// start ticking
+	deltaTimer.Start();
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -462,6 +559,10 @@ void on_resize(GLint w, GLint h) {
 #ifdef _ANT_ENABLE
 	TwWindowSize(w, h);
 #endif
+
+	// build grid
+	build_grid();
+
 	// update projection
 	cameraProjection.FitWidthToAspect(float(w)/float(h));
 
@@ -512,9 +613,9 @@ void on_mouse_button(GLint button, GLint state, GLint x, GLint y) {
 		mouseRight  &= button == GLUT_RIGHT_BUTTON ? false : mouseRight;
 	}
 	if(button == 3)
-		invCameraWorld.TranslateWorld(Vector3(0,0,0.15f));
+		cameraWorld.TranslateLocal(Vector3(0,0,-0.15f));
 	if(button == 4)
-		invCameraWorld.TranslateWorld(Vector3(0,0,-0.15f));
+		cameraWorld.TranslateLocal(Vector3(0,0,0.15f));
 }
 
 
@@ -535,14 +636,14 @@ void on_mouse_motion(GLint x, GLint y) {
 
 	if(mouseLeft)
 	{
-		invCameraWorld.RotateAboutWorldX(-0.01f*MOUSE_YREL);
-		invCameraWorld.RotateAboutLocalY( 0.01f*MOUSE_XREL);
+		cameraWorld.RotateAboutLocalX(-2.0f*MOUSE_YREL*deltaTicks);
+		cameraWorld.RotateAboutWorldY(-2.0f*MOUSE_XREL*deltaTicks);
 	}
 	if(mouseRight)
 	{
-		invCameraWorld.TranslateWorld(Vector3( 0.01f*MOUSE_XREL,
-		                                      -0.01f*MOUSE_YREL,
-		                                       0));
+		cameraWorld.TranslateWorld(deltaTicks*Vector3(-5.0f*MOUSE_XREL,
+		                                               5.0f*MOUSE_YREL,
+		                                               0));
 	}
 }
 
@@ -562,8 +663,8 @@ void on_mouse_wheel(GLint wheel, GLint direction, GLint x, GLint y) {
 //
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv) {
-	const GLuint CONTEXT_MAJOR = 4;
-	const GLuint CONTEXT_MINOR = 2;
+	const GLuint CONTEXT_MAJOR = 3;
+	const GLuint CONTEXT_MINOR = 3;
 
 	// init glut
 	glutInit(&argc, argv);
