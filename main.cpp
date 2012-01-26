@@ -440,10 +440,6 @@ void on_init() {
 
 
 #endif // _ANT_ENABLE
-
-	glUseProgram(programs[PROGRAM_RENDER]);
-	glBindVertexArray(vertexArrays[VERTEX_ARRAY_GRID]);
-
 	fw::check_gl_error();
 }
 
@@ -502,7 +498,7 @@ void on_update() {
 	cameraProjection = Projection::Perspective(FOVY,
 	                                           aspect,
 	                                           (abs(camPos[1])+0.01f) * 0.2f,
-	                                           (abs(camPos[1])+0.01f) * 10000.0f);
+	                                           (abs(camPos[1])+0.01f) * 1000.0f);
 
 	// update transformations
 	Matrix4x4 mvp = cameraProjection.ExtractTransformMatrix()
@@ -526,9 +522,9 @@ void on_update() {
 	                    1,
 	                    reinterpret_cast<float*>(&camPos));
 
-//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
 	// render the model
+	glUseProgram(programs[PROGRAM_RENDER]);
+	glBindVertexArray(vertexArrays[VERTEX_ARRAY_GRID]);
 	glDrawElements(GL_TRIANGLES,
 	               gridIndexCount,
 	               GL_UNSIGNED_INT,
@@ -539,8 +535,6 @@ void on_update() {
 	glUseProgram(0);
 	glBindVertexArray(0);
 	TwDraw();
-	glUseProgram(programs[PROGRAM_RENDER]);
-	glBindVertexArray(vertexArrays[VERTEX_ARRAY_GRID]);
 #endif // _ANT_ENABLE
 
 	fw::check_gl_error();
