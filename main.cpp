@@ -4,7 +4,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 // enable gui
-#define _ANT_ENABLE
+//#define _ANT_ENABLE
 
 // GL libraries
 #include "glew.hpp"
@@ -85,15 +85,15 @@ bool mouseLeft  = false;
 bool mouseRight = false;
 
 GLfloat deltaTicks = 0.0f;
-GLfloat tileSize   = 1.0f; // controls the size of the tile
-GLuint gridSize    = 8;    // controls the size of the triangles of the grid
+GLfloat tileSize   = 1.0f;  // controls the size of the tile
+GLuint gridSize    = 10;    // controls the size of the triangles of the grid
 GLuint gridVertexCount = 0;
 GLuint gridIndexCount  = 0;
 GLuint activeTexture   = TEXTURE_WOOD; // displayed texture
 GLuint activeSampler   = SAMPLER_TRILINEAR; // texture filtering method
 
 #ifdef _ANT_ENABLE
-float speed = 0.0f;
+float speed = 0.0f; // app speed (in ms)
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -368,8 +368,6 @@ void on_init() {
 	set_texture();
 	set_tile_size();
 
-	glEnable(GL_DEPTH_TEST);
-//	glEnable(GL_CULL_FACE);
 	glClearColor(0.13,0.13,0.15,1.0);
 
 #ifdef _ANT_ENABLE
@@ -497,8 +495,8 @@ void on_update() {
 	Vector3 camPos    = cameraWorld.GetPosition();
 	cameraProjection = Projection::Perspective(FOVY,
 	                                           aspect,
-	                                           (abs(camPos[1])+0.01f) * 0.2f,
-	                                           (abs(camPos[1])+0.01f) * 1000.0f);
+	                                           (abs(camPos[1])+0.01f) * 1.0f,
+	                                           (abs(camPos[1])+0.01f) * 10000.0f);
 
 	// update transformations
 	Matrix4x4 mvp = cameraProjection.ExtractTransformMatrix()
