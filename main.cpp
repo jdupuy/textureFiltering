@@ -532,7 +532,11 @@ void on_update() {
 	// back to default vertex array
 	glUseProgram(0);
 	glBindVertexArray(0);
+	glBindSampler(activeTexture,
+	              0);
 	TwDraw();
+	glBindSampler(activeTexture,
+	              samplers[activeSampler]);
 #endif // _ANT_ENABLE
 
 	fw::check_gl_error();
