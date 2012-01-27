@@ -155,7 +155,7 @@ void build_grid() {
 		glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_GRID_VERTICES]);
 		glVertexAttribPointer(0,2,GL_FLOAT,0,0,FW_BUFFER_OFFSET(0));
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[BUFFER_GRID_INDEXES]);
-	glBindVertexArray(0);
+//	glBindVertexArray(0);
 
 	// record data count
 	gridVertexCount = vertices.size();
@@ -163,17 +163,15 @@ void build_grid() {
 }
 
 void set_tile_size() {
-	glProgramUniform1f(programs[PROGRAM_RENDER],
-	                   glGetUniformLocation(programs[PROGRAM_RENDER],
-	                                         "uInvTileSize"),
-	                   1.0f/tileSize);
+	glUniform1f(glGetUniformLocation(programs[PROGRAM_RENDER],
+	                                 "uInvTileSize"),
+	            1.0f/tileSize);
 }
 
 void set_texture() {
-	glProgramUniform1i(programs[PROGRAM_RENDER],
-	                   glGetUniformLocation(programs[PROGRAM_RENDER],
-	                                         "sDiffuse"),
-	                   activeTexture);
+	glUniform1i(glGetUniformLocation(programs[PROGRAM_RENDER],
+	                                 "sDiffuse"),
+	            activeTexture);
 }
 
 void set_sampler() {
@@ -365,6 +363,7 @@ void on_init() {
 	                       "grid.glsl",
 	                       "",
 	                       GL_TRUE);
+	glUseProgram(programs[PROGRAM_RENDER]);
 	set_texture();
 	set_tile_size();
 
@@ -502,27 +501,24 @@ void on_update() {
 	Matrix4x4 mvp = cameraProjection.ExtractTransformMatrix()
 	              * cameraWorld.ExtractInverseTransformMatrix();
 
-	glProgramUniformMatrix4fv(programs[PROGRAM_RENDER],
-	                          glGetUniformLocation(programs[PROGRAM_RENDER],
+	glUniformMatrix4fv(glGetUniformLocation(programs[PROGRAM_RENDER],
 	                                         "uModelViewProjection"),
-	                          1,
-	                          0,
-	                          reinterpret_cast<float*>(&mvp));
-	glProgramUniformMatrix3fv(programs[PROGRAM_RENDER],
-	                          glGetUniformLocation(programs[PROGRAM_RENDER],
+	                   1,
+	                   0,
+	                   reinterpret_cast<float*>(&mvp));
+	glUniformMatrix3fv(glGetUniformLocation(programs[PROGRAM_RENDER],
 	                                         "uCameraWorldAxis"),
-	                          1,
-	                          0,
-	                          reinterpret_cast<float*>(&camAxis));
-	glProgramUniform3fv(programs[PROGRAM_RENDER],
-	                    glGetUniformLocation(programs[PROGRAM_RENDER],
-	                                         "uCameraWorldPosition"),
-	                    1,
-	                    reinterpret_cast<float*>(&camPos));
+	                   1,
+	                   0,
+	                   reinterpret_cast<float*>(&camAxis));
+	glUniform3fv(glGetUniformLocation(programs[PROGRAM_RENDER],
+	                                  "uCameraWorldPosition"),
+	             1,
+	             reinterpret_cast<float*>(&camPos));
 
 	// render the model
-	glUseProgram(programs[PROGRAM_RENDER]);
-	glBindVertexArray(vertexArrays[VERTEX_ARRAY_GRID]);
+//	glUseProgram(programs[PROGRAM_RENDER]);
+//	glBindVertexArray(vertexArrays[VERTEX_ARRAY_GRID]);
 	glDrawElements(GL_TRIANGLES,
 	               gridIndexCount,
 	               GL_UNSIGNED_INT,
@@ -535,6 +531,8 @@ void on_update() {
 	glBindSampler(activeTexture,
 	              0);
 	TwDraw();
+	glUseProgram(programs[PROGRAM_RENDER]);
+	glBindVertexArray(vertexArrays[VERTEX_ARRAY_GRID]);
 	glBindSampler(activeTexture,
 	              samplers[activeSampler]);
 #endif // _ANT_ENABLE
@@ -563,8 +561,7 @@ void on_resize(GLint w, GLint h) {
 	cameraProjection.FitWidthToAspect(float(w)/float(h));
 
 	// update fov
-	glProgramUniform2f(programs[PROGRAM_RENDER],
-	                   glGetUniformLocation(programs[PROGRAM_RENDER],
+	glUniform2f(glGetUniformLocation(programs[PROGRAM_RENDER],
 	                                         "uTanFov"),
 	                   tan(FOVY)*float(w)/float(h),
 	                   tan(FOVY) );
