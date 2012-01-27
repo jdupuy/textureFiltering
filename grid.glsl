@@ -13,7 +13,9 @@ uniform float uInvTileSize;
 #ifdef _VERTEX_
 
 layout(location=0) in vec2 iPosition; // NDC position
-out vec2 texCoord;
+out vec2 vsTexCoord;
+
+#define oTexCoord vsTexCoord
 
 void main() {
 	// compute world space ray dir
@@ -22,26 +24,27 @@ void main() {
 	            + uTanFov.x * iPosition.x * uCameraWorldAxis[0]
 	            + uTanFov.y * iPosition.y * uCameraWorldAxis[1]);
 	float t     = -uCameraWorldPosition.y / rayDir.y;
-	texCoord    = uCameraWorldPosition.xz + t * rayDir.xz;
+	oTexCoord   = uCameraWorldPosition.xz + t * rayDir.xz;
 
-	gl_Position = uModelViewProjection * vec4(texCoord.x,
+	gl_Position = uModelViewProjection * vec4(oTexCoord.x,
 	                                          0.0,
-	                                          texCoord.y,
+	                                          oTexCoord.y,
 	                                          1.0);
 
 	// scale texcoord
-	texCoord *= uInvTileSize;
+	oTexCoord *= uInvTileSize;
 }
 
 #endif
 
 #ifdef _FRAGMENT_
 
-in vec2 texCoord;
+in vec2 vsTexCoord;
 layout(location=0) out vec4 oColour;
+#define iTexCoord vsTexCoord
 
 void main() {
-	oColour = texture(sDiffuse, texCoord);
+	oColour = texture(sDiffuse, iTexCoord);
 //	oColour = vec4(1.0);
 }
 
