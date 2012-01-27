@@ -85,12 +85,15 @@ bool mouseLeft  = false;
 bool mouseRight = false;
 
 GLfloat deltaTicks = 0.0f;
-GLfloat tileSize   = 1.0f;  // controls the size of the tile
-GLuint gridSize    = 10;    // controls the size of the triangles of the grid
+GLfloat tileSize   = 5.0f;  // controls the size of the tile
+GLuint gridSize    = 16;    // controls the size of the triangles of the grid
 GLuint gridVertexCount = 0;
 GLuint gridIndexCount  = 0;
 GLuint activeTexture   = TEXTURE_WOOD; // displayed texture
 GLuint activeSampler   = SAMPLER_TRILINEAR; // texture filtering method
+
+bool wireframe         = false;
+bool scrollTexture     = true;
 
 #ifdef _ANT_ENABLE
 float speed = 0.0f; // app speed (in ms)
@@ -377,7 +380,7 @@ void on_init() {
 
 	// Create a new bar
 	TwBar* menuBar = TwNewBar("menu");
-	TwDefine("menu size='250 150'");
+	TwDefine("menu size='250 170'");
 
 	TwAddVarRO(menuBar,
 	           "speed (ms)",
@@ -390,6 +393,12 @@ void on_init() {
 	             &toggle_fullscreen,
 	             NULL,
 	             "label='toggle fullscreen'");
+
+	TwAddVarRW(menuBar,
+	           "wireframe",
+	           TW_TYPE_BOOLCPP,
+	           &wireframe,
+	           "true='ON' false='OFF'");
 
 	TwAddSeparator( menuBar,
 	                "options",
@@ -435,6 +444,11 @@ void on_init() {
 	           NULL,
 	           "help='Change tiled texture.' ");
 
+	TwAddVarRW(menuBar,
+	           "scrolling",
+	           TW_TYPE_BOOLCPP,
+	           &scrollTexture,
+	           "true='ENABLED' false='DISABLED'");
 
 #endif // _ANT_ENABLE
 	fw::check_gl_error();
@@ -489,6 +503,15 @@ void on_update() {
 	// clear back buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	// scrolling
+	static GLfloat scroll = 0.0f;
+	if(scrollTexture) {
+		scroll = fmod(scroll - 0.3f*deltaTicks, 50.0f);
+		glUniform1f(glGetUniformLocation(programs[PROGRAM_RENDER],
+	                                  "uTextureOffset"),
+	                scroll);
+	}
+
 	// compute camera's world axis and position
 	Matrix3x3 camAxis = cameraWorld.GetUnitAxis();
 	Vector3 camPos    = cameraWorld.GetPosition();
@@ -516,7 +539,12 @@ void on_update() {
 	             1,
 	             reinterpret_cast<float*>(&camPos));
 
-	// render the model
+	if(wireframe)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	else
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	// render the grid
 //	glUseProgram(programs[PROGRAM_RENDER]);
 //	glBindVertexArray(vertexArrays[VERTEX_ARRAY_GRID]);
 	glDrawElements(GL_TRIANGLES,
@@ -563,8 +591,8 @@ void on_resize(GLint w, GLint h) {
 	// update fov
 	glUniform2f(glGetUniformLocation(programs[PROGRAM_RENDER],
 	                                         "uTanFov"),
-	                   tan(FOVY)*float(w)/float(h),
-	                   tan(FOVY) );
+	                   tan(FOVY*0.5f)*float(w)/float(h),
+	                   tan(FOVY*0.5f) );
 }
 
 
@@ -629,13 +657,13 @@ void on_mouse_motion(GLint x, GLint y) {
 
 	if(mouseLeft)
 	{
-		cameraWorld.RotateAboutLocalX(-2.0f*MOUSE_YREL*deltaTicks);
-		cameraWorld.RotateAboutWorldY(-2.0f*MOUSE_XREL*deltaTicks);
+//		cameraWorld.RotateAboutLocalX(-2.0f*MOUSE_YREL*deltaTicks);
+		cameraWorld.RotateAboutWorldY(-0.5f*MOUSE_XREL*deltaTicks);
 	}
 	if(mouseRight)
 	{
-		cameraWorld.TranslateWorld(deltaTicks*Vector3(-5.0f*MOUSE_XREL,
-		                                               5.0f*MOUSE_YREL,
+		cameraWorld.TranslateWorld(deltaTicks*Vector3(-2.0f*MOUSE_XREL,
+		                                               2.0f*MOUSE_YREL,
 		                                               0));
 	}
 }

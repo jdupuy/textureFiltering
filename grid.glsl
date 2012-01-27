@@ -9,6 +9,7 @@ uniform vec2 uTanFov;
 uniform mat4 uModelViewProjection;
 
 uniform float uInvTileSize;
+uniform float uTextureOffset;
 
 #ifdef _VERTEX_
 
@@ -32,7 +33,8 @@ void main() {
 	                                          1.0);
 
 	// scale texcoord
-	oTexCoord *= uInvTileSize;
+	oTexCoord*= uInvTileSize;
+	oTexCoord+= uTextureOffset;
 }
 
 #endif
