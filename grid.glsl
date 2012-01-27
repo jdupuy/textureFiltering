@@ -45,7 +45,6 @@ layout(location=0) out vec4 oColour;
 
 void main() {
 	oColour = texture(sDiffuse, iTexCoord);
-//	oColour = vec4(1.0);
 }
 
 #endif
