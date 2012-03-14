@@ -3,7 +3,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-// enable gui
+// gui
 #define _ANT_ENABLE
 
 // GL libraries
@@ -75,25 +75,25 @@ GLuint *samplers     = NULL;
 GLuint *programs     = NULL;
 
 // Tools
-Affine cameraWorld          = Affine::Translation(Vector3(0,2,10));
+Affine cameraWorld          = Affine::Translation(Vector3(0,0,0));
 Projection cameraProjection = Projection::Perspective(FOVY,
                                                       1.0f,
-                                                      0.2f,
-                                                      10000.0f);
+                                                      0.1f,
+                                                      100.0f);
 
 bool mouseLeft  = false;
 bool mouseRight = false;
 
 GLfloat deltaTicks = 0.0f;
-GLfloat tileSize   = 5.0f;  // controls the size of the tile
-GLuint gridSize    = 16;    // controls the size of the triangles of the grid
+GLfloat tileSize   = 1.0f;  // controls the size of the tile
+GLuint gridSize    = 16;     // controls the size (pixels) of the grid triangles 
 GLuint gridVertexCount = 0;
 GLuint gridIndexCount  = 0;
-GLuint activeTexture   = TEXTURE_WOOD; // displayed texture
+GLuint activeTexture   = TEXTURE_CHESSBOARD; // displayed texture
 GLuint activeSampler   = SAMPLER_TRILINEAR; // texture filtering method
 
 bool wireframe         = false;
-bool scrollTexture     = true;
+bool scrollTexture     = false;
 
 #ifdef _ANT_ENABLE
 float speed = 0.0f; // app speed (in ms)
@@ -167,8 +167,8 @@ void build_grid() {
 
 void set_tile_size() {
 	glUniform1f(glGetUniformLocation(programs[PROGRAM_RENDER],
-	                                 "uInvTileSize"),
-	            1.0f/tileSize);
+	                                 "uTileSize"),
+	            tileSize);
 }
 
 void set_texture() {
@@ -371,6 +371,7 @@ void on_init() {
 	set_tile_size();
 
 	glClearColor(0.13,0.13,0.15,1.0);
+	glDisable(GL_CULL_FACE);
 
 #ifdef _ANT_ENABLE
 	// start ant
@@ -410,7 +411,7 @@ void on_init() {
 	            &set_tile_size_cb,
 	            &get_tile_size_cb,
 	            NULL,
-	            "min=0.1 max=500.0 step=0.1");
+	            "min=1.0 max=500.0 step=1.0");
 
 	TwEnumVal samplerModeEV[] = {
 		{SAMPLER_LINEAR,         "Linear"},
@@ -501,12 +502,12 @@ void on_update() {
 	glViewport(0,0,windowWidth, windowHeight);
 
 	// clear back buffer
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT);
 
 	// scrolling
 	static GLfloat scroll = 0.0f;
 	if(scrollTexture) {
-		scroll = fmod(scroll - 0.3f*deltaTicks, 50.0f);
+		scroll = fmod(scroll - 0.5f*deltaTicks, 50.0f);
 		glUniform1f(glGetUniformLocation(programs[PROGRAM_RENDER],
 	                                  "uTextureOffset"),
 	                scroll);
@@ -515,10 +516,6 @@ void on_update() {
 	// compute camera's world axis and position
 	Matrix3x3 camAxis = cameraWorld.GetUnitAxis();
 	Vector3 camPos    = cameraWorld.GetPosition();
-	cameraProjection = Projection::Perspective(FOVY,
-	                                           aspect,
-	                                           (abs(camPos[1])+0.01f) * 1.0f,
-	                                           (abs(camPos[1])+0.01f) * 10000.0f);
 
 	// update transformations
 	Matrix4x4 mvp = cameraProjection.ExtractTransformMatrix()
@@ -605,6 +602,8 @@ void on_key_down(GLubyte key, GLint x, GLint y) {
 #endif
 	if (key==27) // escape
 		glutLeaveMainLoop();
+	if(key=='s')
+		scrollTexture = !scrollTexture;
 	if(key=='f')
 		glutFullScreenToggle();
 	if(key=='p')
@@ -657,7 +656,7 @@ void on_mouse_motion(GLint x, GLint y) {
 
 	if(mouseLeft)
 	{
-//		cameraWorld.RotateAboutLocalX(-2.0f*MOUSE_YREL*deltaTicks);
+		cameraWorld.RotateAboutLocalX(-2.0f*MOUSE_YREL*deltaTicks);
 		cameraWorld.RotateAboutWorldY(-0.5f*MOUSE_XREL*deltaTicks);
 	}
 	if(mouseRight)
@@ -700,7 +699,7 @@ int main(int argc, char** argv) {
 #endif
 
 	// build window
-	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glutInitDisplayMode(/*GLUT_DEPTH |*/ GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowSize(800, 600);
 	glutInitWindowPosition(0, 0);
 	glutCreateWindow("texture filtering");
