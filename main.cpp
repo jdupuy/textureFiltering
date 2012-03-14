@@ -34,7 +34,7 @@
 
 // Constants
 const float PI   = 3.14159265;
-const float FOVY = PI*0.25f;
+const float FOVY = PI*0.5f;
 
 enum {
 	// buffers
@@ -78,14 +78,14 @@ GLuint *programs     = NULL;
 Affine cameraWorld          = Affine::Translation(Vector3(0,0,0));
 Projection cameraProjection = Projection::Perspective(FOVY,
                                                       1.0f,
-                                                      0.1f,
+                                                      0.01f,
                                                       35.0f);
 
 bool mouseLeft  = false;
 bool mouseRight = false;
 
 GLfloat deltaTicks = 0.0f;
-GLfloat tileSize   = 10.0f;  // controls the size of the tile
+GLfloat tileSize   = 3.0f;  // controls the size of the tile
 GLuint gridSize    = 8;     // controls the size (pixels) of the grid triangles 
 GLuint gridVertexCount = 0;
 GLuint gridIndexCount  = 0;
@@ -229,42 +229,35 @@ void build_texture(const fw::Tga& tga, GLuint textureName) {
 
 #ifdef _ANT_ENABLE
 
-static void TW_CALL toggle_fullscreen(void *data)
-{
+static void TW_CALL toggle_fullscreen(void *data) {
 	// toggle fullscreen
 	glutFullScreenToggle();
 }
 
-static void TW_CALL set_filtering_mode_cb(const void *value, void *clientData)
-{
+static void TW_CALL set_filtering_mode_cb(const void *value, void *clientData) {
 	activeSampler = *(const GLint *)value;
 	set_sampler();
 }
 
-static void TW_CALL get_filtering_mode_cb(void *value, void *clientData)
-{
+static void TW_CALL get_filtering_mode_cb(void *value, void *clientData) {
 	*(GLint *)value = activeSampler;
 }
 
-static void TW_CALL set_texture_cb(const void *value, void *clientData)
-{
+static void TW_CALL set_texture_cb(const void *value, void *clientData) {
 	activeTexture = *(const GLint *)value;
 	set_texture();
 }
 
-static void TW_CALL get_texture_cb(void *value, void *clientData)
-{
+static void TW_CALL get_texture_cb(void *value, void *clientData) {
 	*(GLint *)value = activeTexture;
 }
 
-static void TW_CALL set_tile_size_cb(const void *value, void *clientData)
-{
+static void TW_CALL set_tile_size_cb(const void *value, void *clientData) {
 	tileSize = *(const GLfloat *)value;
 	set_tile_size();
 }
 
-static void TW_CALL get_tile_size_cb(void *value, void *clientData)
-{
+static void TW_CALL get_tile_size_cb(void *value, void *clientData) {
 	*(GLfloat *)value = tileSize;
 }
 
@@ -604,6 +597,8 @@ void on_key_down(GLubyte key, GLint x, GLint y) {
 		glutLeaveMainLoop();
 	if(key=='s')
 		scrollTexture = !scrollTexture;
+	if(key=='w')
+		wireframe = !wireframe;
 	if(key=='f')
 		glutFullScreenToggle();
 	if(key=='p')
@@ -622,13 +617,11 @@ void on_mouse_button(GLint button, GLint state, GLint x, GLint y) {
 	if(1 == TwEventMouseButtonGLUT(button, state, x, y))
 		return;
 #endif // _ANT_ENABLE
-	if(state==GLUT_DOWN)
-	{
+	if(state==GLUT_DOWN) {
 		mouseLeft  |= button == GLUT_LEFT_BUTTON;
 		mouseRight |= button == GLUT_RIGHT_BUTTON;
 	}
-	else
-	{
+	else {
 		mouseLeft  &= button == GLUT_LEFT_BUTTON ? false : mouseLeft;
 		mouseRight  &= button == GLUT_RIGHT_BUTTON ? false : mouseRight;
 	}
@@ -654,14 +647,12 @@ void on_mouse_motion(GLint x, GLint y) {
 	sMousePreviousX = x;
 	sMousePreviousY = y;
 
-	if(mouseLeft)
-	{
+	if(mouseLeft) {
 		cameraWorld.RotateAboutLocalX(-2.0f*MOUSE_YREL*deltaTicks);
-		cameraWorld.RotateAboutWorldY(-0.5f*MOUSE_XREL*deltaTicks);
+		cameraWorld.RotateAboutWorldY(-2.0f*MOUSE_XREL*deltaTicks);
 	}
-	if(mouseRight)
-	{
-		cameraWorld.TranslateWorld(deltaTicks*Vector3(-2.0f*MOUSE_XREL,
+	if(mouseRight) {
+		cameraWorld.TranslateLocal(deltaTicks*Vector3(-2.0f*MOUSE_XREL,
 		                                               2.0f*MOUSE_YREL,
 		                                               0));
 	}

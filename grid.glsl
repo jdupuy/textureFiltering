@@ -14,7 +14,6 @@ uniform float uTextureOffset;
 #define PI 3.14159265
 
 #ifdef _VERTEX_
-
 layout(location=0) in vec2 iPosition; // NDC position
 out vec2 vsTexCoord;
 
@@ -29,7 +28,6 @@ void main() {
 
 	// collision against cylinder
 	// https://www.cl.cam.ac.uk/teaching/1999/AGraphHCI/SMAG/node2.html
-	// a=xD2+yD2, b=2xExD+2yEyD, and c=xE2+yE2-1.
 	float a  = rayDir.x*rayDir.x + rayDir.y*rayDir.y;
 	float b  = 2.0*uCameraWorldPosition.x*rayDir.x
 	         + 2.0*uCameraWorldPosition.y*rayDir.y;
@@ -39,23 +37,19 @@ void main() {
 	float d  = b*b - 4.0*a*c;
 	float t  = (-b-sqrt(d))/a*0.5;
 
-	// world space position
+	// get world position and project
 	vec3 p   = uCameraWorldPosition.xyz + t*rayDir.xyz;
-
 	gl_Position = uModelViewProjection * vec4(p,1.0);
 
 	// compute texcoord
-	vec2 p2 = normalize(p.xy);
-	oTexCoord = vec2(atan(p2.y,p2.x)*0.5/PI+0.5, p.z*0.25);
+	oTexCoord = vec2(atan(p.y,p.x)/PI*0.5+0.5, p.z*0.25);
 	oTexCoord*= uTileSize;
 	oTexCoord.t+= uTextureOffset;
 
 }
-
 #endif
 
 #ifdef _FRAGMENT_
-
 in vec2 vsTexCoord;
 layout(location=0) out vec4 oColour;
 #define iTexCoord vsTexCoord
@@ -64,6 +58,5 @@ void main() {
 	oColour = texture(sDiffuse, iTexCoord);
 //	oColour = vec4(1);
 }
-
 #endif
 
