@@ -79,14 +79,14 @@ Affine cameraWorld          = Affine::Translation(Vector3(0,0,0));
 Projection cameraProjection = Projection::Perspective(FOVY,
                                                       1.0f,
                                                       0.1f,
-                                                      100.0f);
+                                                      35.0f);
 
 bool mouseLeft  = false;
 bool mouseRight = false;
 
 GLfloat deltaTicks = 0.0f;
-GLfloat tileSize   = 1.0f;  // controls the size of the tile
-GLuint gridSize    = 16;     // controls the size (pixels) of the grid triangles 
+GLfloat tileSize   = 10.0f;  // controls the size of the tile
+GLuint gridSize    = 8;     // controls the size (pixels) of the grid triangles 
 GLuint gridVertexCount = 0;
 GLuint gridIndexCount  = 0;
 GLuint activeTexture   = TEXTURE_CHESSBOARD; // displayed texture
@@ -370,9 +370,6 @@ void on_init() {
 	set_texture();
 	set_tile_size();
 
-	glClearColor(0.13,0.13,0.15,1.0);
-	glDisable(GL_CULL_FACE);
-
 #ifdef _ANT_ENABLE
 	// start ant
 	TwInit(TW_OPENGL, NULL);
@@ -381,7 +378,10 @@ void on_init() {
 
 	// Create a new bar
 	TwBar* menuBar = TwNewBar("menu");
-	TwDefine("menu size='250 170'");
+	TwDefine("menu size='220 170'");
+	TwDefine("menu position='0 0'");
+	TwDefine("menu alpha='255'");
+	TwDefine("menu valueswidth=85");
 
 	TwAddVarRO(menuBar,
 	           "speed (ms)",
@@ -449,7 +449,7 @@ void on_init() {
 	           "scrolling",
 	           TW_TYPE_BOOLCPP,
 	           &scrollTexture,
-	           "true='ENABLED' false='DISABLED'");
+	           "true='ON' false='OFF'");
 
 #endif // _ANT_ENABLE
 	fw::check_gl_error();
@@ -489,7 +489,6 @@ void on_update() {
 	static fw::Timer deltaTimer;
 	GLint windowWidth  = glutGet(GLUT_WINDOW_WIDTH);
 	GLint windowHeight = glutGet(GLUT_WINDOW_HEIGHT);
-	float aspect       = float(windowWidth)/float(windowHeight);
 
 	// stop timing and set delta
 	deltaTimer.Stop();
@@ -507,7 +506,7 @@ void on_update() {
 	// scrolling
 	static GLfloat scroll = 0.0f;
 	if(scrollTexture) {
-		scroll = fmod(scroll - 0.5f*deltaTicks, 50.0f);
+		scroll = fmod(scroll - tileSize*0.25f*deltaTicks, 50.0f);
 		glUniform1f(glGetUniformLocation(programs[PROGRAM_RENDER],
 	                                  "uTextureOffset"),
 	                scroll);
@@ -549,6 +548,9 @@ void on_update() {
 	               GL_UNSIGNED_INT,
 	               FW_BUFFER_OFFSET(0));
 
+	// start ticking
+	deltaTimer.Start();
+
 #ifdef _ANT_ENABLE
 	// back to default vertex array
 	glUseProgram(0);
@@ -564,8 +566,6 @@ void on_update() {
 
 	fw::check_gl_error();
 
-	// start ticking
-	deltaTimer.Start();
 
 	glutSwapBuffers();
 	glutPostRedisplay();
