@@ -75,7 +75,7 @@ GLuint *samplers     = NULL;
 GLuint *programs     = NULL;
 
 // Tools
-Affine cameraWorld          = Affine::Translation(Vector3(0,0,0));
+Affine cameraWorld          = Affine::Translation(Vector3(0,0,-1));
 Projection cameraProjection = Projection::Perspective(FOVY,
                                                       1.0f,
                                                       0.01f,
@@ -499,7 +499,7 @@ void on_update() {
 	// scrolling
 	static GLfloat scroll = 0.0f;
 	if(scrollTexture) {
-		scroll = fmod(scroll - tileSize*0.25f*deltaTicks, 50.0f);
+		scroll = fmod(scroll - 0.25f*deltaTicks, 50.0f);
 		glUniform1f(glGetUniformLocation(programs[PROGRAM_RENDER],
 	                                  "uTextureOffset"),
 	                scroll);
@@ -558,7 +558,6 @@ void on_update() {
 #endif // _ANT_ENABLE
 
 	fw::check_gl_error();
-
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -666,7 +665,7 @@ void on_mouse_wheel(GLint wheel, GLint direction, GLint x, GLint y) {
 	if(1 == TwMouseWheel(wheel))
 		return;
 #endif // _ANT_ENABLE
-	cameraWorld.TranslateLocal(Vector3(0,0,float(direction)*-0.15f));
+	cameraWorld.TranslateLocal(Vector3(0,0,float(direction)*0.15f));
 }
 
 

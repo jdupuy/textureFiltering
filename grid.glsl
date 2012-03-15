@@ -42,7 +42,7 @@ void main() {
 	gl_Position = uModelViewProjection * vec4(p,1.0);
 
 	// compute texcoord
-	oTexCoord = vec2(atan(p.y,p.x)/PI*0.5+0.5, p.z*0.25);
+	oTexCoord = vec2(atan(p.y,p.x)/PI*0.5+0.5, p.z*0.15);
 	oTexCoord*= uTileSize;
 	oTexCoord.t+= uTextureOffset;
 

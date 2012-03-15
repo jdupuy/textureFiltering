@@ -14,8 +14,8 @@ const Affine Affine::IDENTITY(Matrix3x3::Diagonal(1,1,1),
 Affine Affine::Translation(const Vector3& translation)
 {
 	return Affine(Matrix3x3::Diagonal(1,1,1),
-                  translation,
-                  1.0f);
+	               translation,
+	               1.0f);
 }
 
 
@@ -46,12 +46,15 @@ bool Affine::operator!=(const Affine& affine) const
 	        ||   mScale  != affine.mScale);
 }
 
-
+#include <iostream>
 ////////////////////////////////////////////////////////////////////////////////
 // Translate
 void Affine::TranslateWorld(const Vector3& direction)
 {
-	mPosition += direction;
+//	std::cout << mPosition[0] << ' '
+//	          << mPosition[1] << ' '
+//	          << mPosition[2] << '\n';
+	mPosition+= direction;
 	mIsRS     = mPosition == Vector3::ZERO;
 }
 
