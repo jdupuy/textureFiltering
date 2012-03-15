@@ -85,7 +85,7 @@ bool mouseLeft  = false;
 bool mouseRight = false;
 
 GLfloat deltaTicks = 0.0f;
-GLfloat tileSize   = 3.0f;  // controls the size of the tile
+GLfloat tileSize   = 1.0f;  // controls the size of the tile
 GLuint gridSize    = 8;     // controls the size (pixels) of the grid triangles 
 GLuint gridVertexCount = 0;
 GLuint gridIndexCount  = 0;
@@ -158,7 +158,9 @@ void build_grid() {
 		glBindBuffer(GL_ARRAY_BUFFER, buffers[BUFFER_GRID_VERTICES]);
 		glVertexAttribPointer(0,2,GL_FLOAT,0,0,FW_BUFFER_OFFSET(0));
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[BUFFER_GRID_INDEXES]);
-//	glBindVertexArray(0);
+#ifdef _ANT_ENABLE
+	glBindVertexArray(0);
+#endif
 
 	// record data count
 	gridVertexCount = vertices.size();
@@ -166,15 +168,27 @@ void build_grid() {
 }
 
 void set_tile_size() {
+#ifdef _ANT_ENABLE
+	glUseProgram(programs[PROGRAM_RENDER]);
+#endif // _ANT_ENABLE
 	glUniform1f(glGetUniformLocation(programs[PROGRAM_RENDER],
 	                                 "uTileSize"),
 	            tileSize);
+#ifdef _ANT_ENABLE
+	glUseProgram(0);
+#endif // _ANT_ENABLE
 }
 
 void set_texture() {
+#ifdef _ANT_ENABLE
+	glUseProgram(programs[PROGRAM_RENDER]);
+#endif // _ANT_ENABLE
 	glUniform1i(glGetUniformLocation(programs[PROGRAM_RENDER],
 	                                 "sDiffuse"),
 	            activeTexture);
+#ifdef _ANT_ENABLE
+	glUseProgram(0);
+#endif // _ANT_ENABLE
 }
 
 void set_sampler() {
@@ -310,6 +324,9 @@ void on_init() {
 	glSamplerParameteri(samplers[SAMPLER_TRILINEAR],
 	                    GL_TEXTURE_MIN_FILTER,
 	                    GL_LINEAR_MIPMAP_LINEAR);
+//	glSamplerParameteri(samplers[SAMPLER_TRILINEAR],
+//	                    GL_TEXTURE_WRAP_S,
+//	                    GL_CLAMP_TO_EDGE);
 
 	glSamplerParameteri(samplers[SAMPLER_ANISOTROPICX2],
 	                    GL_TEXTURE_MAG_FILTER,
@@ -496,6 +513,18 @@ void on_update() {
 	// clear back buffer
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	// compute camera's world axis and position
+	Matrix3x3 camAxis = cameraWorld.GetUnitAxis();
+	Vector3 camPos    = cameraWorld.GetPosition();
+
+	// render the grid
+#ifdef _ANT_ENABLE
+	glUseProgram(programs[PROGRAM_RENDER]);
+	glBindVertexArray(vertexArrays[VERTEX_ARRAY_GRID]);
+	glBindSampler(activeTexture,
+	              samplers[activeSampler]);
+#endif // _ANT_ENABLE
+
 	// scrolling
 	static GLfloat scroll = 0.0f;
 	if(scrollTexture) {
@@ -504,10 +533,6 @@ void on_update() {
 	                                  "uTextureOffset"),
 	                scroll);
 	}
-
-	// compute camera's world axis and position
-	Matrix3x3 camAxis = cameraWorld.GetUnitAxis();
-	Vector3 camPos    = cameraWorld.GetPosition();
 
 	// update transformations
 	Matrix4x4 mvp = cameraProjection.ExtractTransformMatrix()
@@ -533,9 +558,7 @@ void on_update() {
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	// render the grid
-//	glUseProgram(programs[PROGRAM_RENDER]);
-//	glBindVertexArray(vertexArrays[VERTEX_ARRAY_GRID]);
+	// draw
 	glDrawElements(GL_TRIANGLES,
 	               gridIndexCount,
 	               GL_UNSIGNED_INT,
@@ -551,10 +574,7 @@ void on_update() {
 	glBindSampler(activeTexture,
 	              0);
 	TwDraw();
-	glUseProgram(programs[PROGRAM_RENDER]);
-	glBindVertexArray(vertexArrays[VERTEX_ARRAY_GRID]);
-	glBindSampler(activeTexture,
-	              samplers[activeSampler]);
+
 #endif // _ANT_ENABLE
 
 	fw::check_gl_error();
@@ -578,10 +598,16 @@ void on_resize(GLint w, GLint h) {
 	cameraProjection.FitWidthToAspect(float(w)/float(h));
 
 	// update fov
+#ifdef _ANT_ENABLE
+	glUseProgram(programs[PROGRAM_RENDER]);
+#endif // _ANT_ENABLE
 	glUniform2f(glGetUniformLocation(programs[PROGRAM_RENDER],
 	                                         "uTanFov"),
 	                   tan(FOVY*0.5f)*float(w)/float(h),
 	                   tan(FOVY*0.5f) );
+#ifdef _ANT_ENABLE
+	glUseProgram(0);
+#endif // _ANT_ENABLE
 }
 
 
