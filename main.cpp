@@ -75,18 +75,18 @@ GLuint *samplers     = NULL;
 GLuint *programs     = NULL;
 
 // Tools
-Affine cameraWorld          = Affine::Translation(Vector3(0,0,-1));
+Affine cameraWorld          = Affine::Translation(Vector3(0,0,0));
 Projection cameraProjection = Projection::Perspective(FOVY,
                                                       1.0f,
-                                                      0.01f,
-                                                      35.0f);
+                                                      0.001f,
+                                                      40.0f);
 
 bool mouseLeft  = false;
 bool mouseRight = false;
 
 GLfloat deltaTicks = 0.0f;
 GLfloat tileSize   = 1.0f;  // controls the size of the tile
-GLuint gridSize    = 8;     // controls the size (pixels) of the grid triangles 
+GLuint gridSize    = 5;     // controls the size (pixels) of the grid triangles 
 GLuint gridVertexCount = 0;
 GLuint gridIndexCount  = 0;
 GLuint activeTexture   = TEXTURE_CHESSBOARD; // displayed texture
@@ -165,6 +165,15 @@ void build_grid() {
 	// record data count
 	gridVertexCount = vertices.size();
 	gridIndexCount  = indexes.size();
+}
+
+
+#ifdef _ANT_ENABLE
+static void TW_CALL set_camera(void *data) {
+#else
+void set_camera() {
+#endif
+	cameraWorld = Affine::IDENTITY;
 }
 
 void set_tile_size() {
@@ -388,7 +397,7 @@ void on_init() {
 
 	// Create a new bar
 	TwBar* menuBar = TwNewBar("menu");
-	TwDefine("menu size='220 170'");
+	TwDefine("menu size='220 180'");
 	TwDefine("menu position='0 0'");
 	TwDefine("menu alpha='255'");
 	TwDefine("menu valueswidth=85");
@@ -460,6 +469,12 @@ void on_init() {
 	           TW_TYPE_BOOLCPP,
 	           &scrollTexture,
 	           "true='ON' false='OFF'");
+
+	TwAddButton( menuBar,
+	             "reset camera",
+	             &set_camera,
+	             NULL,
+	             "");
 
 #endif // _ANT_ENABLE
 	fw::check_gl_error();
@@ -620,6 +635,8 @@ void on_key_down(GLubyte key, GLint x, GLint y) {
 #endif
 	if (key==27) // escape
 		glutLeaveMainLoop();
+	if(key=='r')
+		set_camera(NULL);
 	if(key=='s')
 		scrollTexture = !scrollTexture;
 	if(key=='w')

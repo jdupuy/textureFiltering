@@ -34,8 +34,8 @@ void main() {
 	         + uCameraWorldPosition.y*uCameraWorldPosition.y
 	         - 1.0;
 	float d  = b*b - 4.0*a*c;
-	float t  = (-b-sqrt(d))/a*0.5; // keep smallest solution
-
+	float t  = /*a != 0.0 ? */(-b-sqrt(d))/a*0.5; // keep smallest solution
+//                        : -50.0;
 	// get world position and project
 	vec3 p   = uCameraWorldPosition.xyz + t*rayDir.xyz;
 	gl_Position = uModelViewProjection * vec4(p,1.0);
@@ -97,6 +97,7 @@ void main() {
 //	oColour = texture(sDiffuse, uv);
 
 	oColour = texture(sDiffuse, iTexCoord.st);
+//	oColour= vec4(gl_FragCoord.z);
 }
 #endif
 
