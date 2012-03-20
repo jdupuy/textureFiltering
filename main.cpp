@@ -75,18 +75,19 @@ GLuint *samplers     = NULL;
 GLuint *programs     = NULL;
 
 // Tools
-Affine cameraWorld          = Affine::Translation(Vector3(0,0,0));
+Affine cameraWorld          = Affine::Translation(Vector3(0,1,0));
 Projection cameraProjection = Projection::Perspective(FOVY,
                                                       1.0f,
-                                                      0.001f,
-                                                      40.0f);
+                                                      0.01f,
+                                                      4000.0f);
 
 bool mouseLeft  = false;
 bool mouseRight = false;
 
-GLfloat deltaTicks = 0.0f;
-GLfloat tileSize   = 1.0f;  // controls the size of the tile
-GLuint gridSize    = 5;     // controls the size (pixels) of the grid triangles 
+GLfloat deltaTicks  = 0.0f;
+GLfloat tileSize    = 30.0f;  // controls the size of the tile
+GLfloat scrollSpeed = 1.0f;   // scrolling speed
+GLuint gridSize     = 8;      // controls the size (pixels) of the grid triangles 
 GLuint gridVertexCount = 0;
 GLuint gridIndexCount  = 0;
 GLuint activeTexture   = TEXTURE_CHESSBOARD; // displayed texture
@@ -173,7 +174,7 @@ static void TW_CALL set_camera(void *data) {
 #else
 void set_camera() {
 #endif
-	cameraWorld = Affine::IDENTITY;
+	cameraWorld = Affine::Translation(Vector3(0,1,0));
 }
 
 void set_tile_size() {
@@ -182,7 +183,7 @@ void set_tile_size() {
 #endif // _ANT_ENABLE
 	glUniform1f(glGetUniformLocation(programs[PROGRAM_RENDER],
 	                                 "uTileSize"),
-	            tileSize);
+	            tileSize*0.01f);
 #ifdef _ANT_ENABLE
 	glUseProgram(0);
 #endif // _ANT_ENABLE
@@ -389,6 +390,9 @@ void on_init() {
 	set_texture();
 	set_tile_size();
 
+//	glCullFace(GL_FRONT);
+//	glEnable(GL_CULL_FACE);
+
 #ifdef _ANT_ENABLE
 	// start ant
 	TwInit(TW_OPENGL, NULL);
@@ -397,7 +401,7 @@ void on_init() {
 
 	// Create a new bar
 	TwBar* menuBar = TwNewBar("menu");
-	TwDefine("menu size='220 180'");
+	TwDefine("menu size='220 190'");
 	TwDefine("menu position='0 0'");
 	TwDefine("menu alpha='255'");
 	TwDefine("menu valueswidth=85");
@@ -469,6 +473,12 @@ void on_init() {
 	           TW_TYPE_BOOLCPP,
 	           &scrollTexture,
 	           "true='ON' false='OFF'");
+
+	TwAddVarRW(menuBar,
+	           "scroll speed",
+	           TW_TYPE_FLOAT,
+	           &scrollSpeed,
+	           "step=0.1 min=-20.0 max=20.0");
 
 	TwAddButton( menuBar,
 	             "reset camera",
@@ -543,7 +553,7 @@ void on_update() {
 	// scrolling
 	static GLfloat scroll = 0.0f;
 	if(scrollTexture) {
-		scroll = fmod(scroll - 0.25f*deltaTicks, 50.0f);
+		scroll = fmod(scroll - 0.25f*deltaTicks*scrollSpeed, 50.0f);
 		glUniform1f(glGetUniformLocation(programs[PROGRAM_RENDER],
 	                                  "uTextureOffset"),
 	                scroll);
@@ -559,12 +569,12 @@ void on_update() {
 	                   0,
 	                   reinterpret_cast<float*>(&mvp));
 	glUniformMatrix3fv(glGetUniformLocation(programs[PROGRAM_RENDER],
-	                                         "uCameraWorldAxis"),
+	                                         "uEyeAxis"),
 	                   1,
 	                   0,
 	                   reinterpret_cast<float*>(&camAxis));
 	glUniform3fv(glGetUniformLocation(programs[PROGRAM_RENDER],
-	                                  "uCameraWorldPosition"),
+	                                  "uEyePos"),
 	             1,
 	             reinterpret_cast<float*>(&camPos));
 
@@ -610,8 +620,11 @@ void on_resize(GLint w, GLint h) {
 	build_grid();
 
 	// update projection
+#if 0
+	cameraProjection.FitWidthToAspect(float(w)/float(h)*1.5f); // debug
+#else
 	cameraProjection.FitWidthToAspect(float(w)/float(h));
-
+#endif
 	// update fov
 #ifdef _ANT_ENABLE
 	glUseProgram(programs[PROGRAM_RENDER]);
