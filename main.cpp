@@ -85,7 +85,7 @@ bool mouseLeft  = false;
 bool mouseRight = false;
 
 GLfloat deltaTicks  = 0.0f;
-GLfloat tileSize    = 30.0f;  // controls the size of the tile
+GLfloat tileSize    = 100.0f;  // controls the size of the tile
 GLfloat scrollSpeed = 1.0f;   // scrolling speed
 GLuint gridSize     = 8;      // controls the size (pixels) of the grid triangles 
 GLuint gridVertexCount = 0;
@@ -478,7 +478,7 @@ void on_init() {
 	           "scroll speed",
 	           TW_TYPE_FLOAT,
 	           &scrollSpeed,
-	           "step=0.1 min=-20.0 max=20.0");
+	           "step=0.1 min=-50.0 max=50.0");
 
 	TwAddButton( menuBar,
 	             "reset camera",
