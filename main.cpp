@@ -86,8 +86,8 @@ bool mouseRight = false;
 
 GLfloat deltaTicks  = 0.0f;
 GLfloat tileSize    = 100.0f;  // controls the size of the tile
-GLfloat scrollSpeed = 1.0f;   // scrolling speed
-GLuint gridSize     = 8;      // controls the size (pixels) of the grid triangles 
+GLfloat scrollSpeed = 1.0f;    // scrolling speed
+GLuint gridSize     = 8;       // controls the size (pixels) of the grid triangles 
 GLuint gridVertexCount = 0;
 GLuint gridIndexCount  = 0;
 GLuint activeTexture   = TEXTURE_CHESSBOARD; // displayed texture
