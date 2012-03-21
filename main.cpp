@@ -259,7 +259,7 @@ void build_lod_texture(GLuint textureName) {
 		0,0,255,255,     // blue
 		255,0,255,255,   // magenta
 		0,255,255,255,   // cyan
-		255,255,0,255,   // yellow
+		255,255,0,255    // yellow
 	};
 	GLubyte *texels = new GLubyte[256*256*4];
 	glBindTexture(GL_TEXTURE_2D, textures[textureName]);
