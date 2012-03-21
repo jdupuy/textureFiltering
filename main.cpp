@@ -60,6 +60,7 @@ enum {
 	TEXTURE_CHESSBOARD = 0,
 	TEXTURE_WOOD,
 	TEXTURE_GRASS,
+	TEXTURE_LOD,
 	TEXTURE_COUNT,
 
 	// programs
@@ -251,6 +252,41 @@ void build_texture(const fw::Tga& tga, GLuint textureName) {
 	glGenerateMipmap(GL_TEXTURE_2D);
 }
 
+void build_lod_texture(GLuint textureName) {
+	const GLubyte colors[] = {
+		255,255,255,255, // white
+		0,0,0,255,       // black
+		255,0,0,255,     // red
+		0,255,0,255,     // green
+		0,255,255,255,   // cyan
+		255,0,255,255,   // magenta
+		255,255,0,255,   // yellow
+		0,0,255,255,     // blue
+		255,255,255,255  // white (again)
+	};
+	GLubyte *texels = new GLubyte[256*256*4];
+	glBindTexture(GL_TEXTURE_2D, textures[textureName]);
+	// fill texels and upload to GL
+	for(GLint i=0; i<9; ++i) {
+		GLint lodsize = 256>>i;
+		for(GLint j=0;j<lodsize*lodsize; ++j)
+			memcpy(texels+j*4, colors+i*4, 4);
+
+		glTexImage2D( GL_TEXTURE_2D,
+		              i,
+		              GL_RGBA,
+		              lodsize,
+		              lodsize,
+		              0,
+		              GL_RGBA,
+		              GL_UNSIGNED_BYTE,
+		              texels );
+	}
+
+	// clean up
+	delete[] texels;
+}
+
 #ifdef _ANT_ENABLE
 
 static void TW_CALL toggle_fullscreen(void *data) {
@@ -312,6 +348,8 @@ void on_init() {
 		build_texture(fw::Tga("wood.tga"), TEXTURE_WOOD);
 	glActiveTexture(GL_TEXTURE0+TEXTURE_GRASS);
 		build_texture(fw::Tga("grass.tga"), TEXTURE_GRASS);
+	glActiveTexture(GL_TEXTURE0+TEXTURE_LOD);
+		build_lod_texture(TEXTURE_LOD);
 
 	// configure samplers
 	glSamplerParameteri(samplers[SAMPLER_LINEAR],
@@ -457,9 +495,10 @@ void on_init() {
 	TwEnumVal textureEV[] = {
 		{TEXTURE_CHESSBOARD, "Chessboard"},
 		{TEXTURE_WOOD,       "Wood" },
-		{TEXTURE_GRASS,      "Grass"}
+		{TEXTURE_GRASS,      "Grass"},
+		{TEXTURE_LOD,        "LOD"}
 	};
-	TwType textureType= TwDefineEnum("Texture", textureEV, 3);
+	TwType textureType= TwDefineEnum("Texture", textureEV, 4);
 	TwAddVarCB(menuBar,
 	           "texture",
 	           textureType,
