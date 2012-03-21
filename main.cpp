@@ -210,59 +210,56 @@ void set_sampler() {
 void build_texture(const fw::Tga& tga, GLuint textureName) {
 	glBindTexture(GL_TEXTURE_2D, textures[textureName]);
 	if(tga.PixelFormat() == fw::Tga::PIXEL_FORMAT_LUMINANCE)
-		glTexImage2D( GL_TEXTURE_2D,
-		              0,
-		              GL_RED,
-		              tga.Width(),
-		              tga.Height(),
-		              0,
-		              GL_RED,
-		              GL_UNSIGNED_BYTE,
-		              tga.Pixels() );
+		glTexImage2D(GL_TEXTURE_2D,
+		             0,
+		             GL_RED,
+		             tga.Width(),
+		             tga.Height(),
+		             0,
+		             GL_RED,
+		             GL_UNSIGNED_BYTE,
+		             tga.Pixels());
 	else if(tga.PixelFormat() == fw::Tga::PIXEL_FORMAT_LUMINANCE_ALPHA)
-		glTexImage2D( GL_TEXTURE_2D,
-		              0,
-		              GL_RG,
-		              tga.Width(),
-		              tga.Height(),
-		              0,
-		              GL_RG,
-		              GL_UNSIGNED_BYTE,
-		              tga.Pixels() );
+		glTexImage2D(GL_TEXTURE_2D,
+		             0,
+		             GL_RG,
+		             tga.Width(),
+		             tga.Height(),
+		             0,
+		             GL_RG,
+		             GL_UNSIGNED_BYTE,
+		             tga.Pixels());
 	else if(tga.PixelFormat() == fw::Tga::PIXEL_FORMAT_BGR)
-		glTexImage2D( GL_TEXTURE_2D,
-		              0,
-		              GL_RGB,
-		              tga.Width(),
-		              tga.Height(),
-		              0,
-		              GL_BGR,
-		              GL_UNSIGNED_BYTE,
-		              tga.Pixels() );
+		glTexImage2D(GL_TEXTURE_2D,
+		             0,
+		             GL_RGB,
+		             tga.Width(),
+		             tga.Height(),
+		             0,
+		             GL_BGR,
+		             GL_UNSIGNED_BYTE,
+		             tga.Pixels());
 	else if(tga.PixelFormat() == fw::Tga::PIXEL_FORMAT_BGRA)
-		glTexImage2D( GL_TEXTURE_2D,
-		              0,
-		              GL_RGBA,
-		              tga.Width(),
-		              tga.Height(),
-		              0,
-		              GL_BGRA,
-		              GL_UNSIGNED_BYTE,
-		              tga.Pixels() );
+		glTexImage2D(GL_TEXTURE_2D,
+		             0,
+		             GL_RGBA,
+		             tga.Width(),
+		             tga.Height(),
+		             0,
+		             GL_BGRA,
+		             GL_UNSIGNED_BYTE,
+		             tga.Pixels());
 	glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void build_lod_texture(GLuint textureName) {
 	const GLubyte colors[] = {
-		255,255,255,255, // white
-		0,0,0,255,       // black
 		255,0,0,255,     // red
 		0,255,0,255,     // green
-		0,255,255,255,   // cyan
-		255,0,255,255,   // magenta
-		255,255,0,255,   // yellow
 		0,0,255,255,     // blue
-		255,255,255,255  // white (again)
+		255,0,255,255,   // magenta
+		0,255,255,255,   // cyan
+		255,255,0,255,   // yellow
 	};
 	GLubyte *texels = new GLubyte[256*256*4];
 	glBindTexture(GL_TEXTURE_2D, textures[textureName]);
@@ -270,17 +267,17 @@ void build_lod_texture(GLuint textureName) {
 	for(GLint i=0; i<9; ++i) {
 		GLint lodsize = 256>>i;
 		for(GLint j=0;j<lodsize*lodsize; ++j)
-			memcpy(texels+j*4, colors+i*4, 4);
+			memcpy(texels+j*4, colors+(i%6)*4, 4);
 
-		glTexImage2D( GL_TEXTURE_2D,
-		              i,
-		              GL_RGBA,
-		              lodsize,
-		              lodsize,
-		              0,
-		              GL_RGBA,
-		              GL_UNSIGNED_BYTE,
-		              texels );
+		glTexImage2D(GL_TEXTURE_2D,
+		             i,
+		             GL_RGBA,
+		             lodsize,
+		             lodsize,
+		             0,
+		             GL_RGBA,
+		             GL_UNSIGNED_BYTE,
+		             texels);
 	}
 
 	// clean up
