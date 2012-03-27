@@ -57,10 +57,10 @@ enum {
 	SAMPLER_COUNT,
 
 	// textures
-	TEXTURE_CHESSBOARD = 0,
+	TEXTURE_LOD = 0,
 	TEXTURE_WOOD,
 	TEXTURE_GRASS,
-	TEXTURE_LOD,
+	TEXTURE_CHESSBOARD,
 	TEXTURE_COUNT,
 
 	// programs
@@ -197,6 +197,10 @@ void set_texture() {
 	glUniform1i(glGetUniformLocation(programs[PROGRAM_RENDER],
 	                                 "sDiffuse"),
 	            activeTexture);
+	// disable gt computation
+	glUniform1f(glGetUniformLocation(programs[PROGRAM_RENDER],
+	                                 "uGroundTruth"),
+	            0.f);
 #ifdef _ANT_ENABLE
 	glUseProgram(0);
 #endif // _ANT_ENABLE
@@ -302,7 +306,21 @@ static void TW_CALL get_filtering_mode_cb(void *value, void *clientData) {
 
 static void TW_CALL set_texture_cb(const void *value, void *clientData) {
 	activeTexture = *(const GLint *)value;
-	set_texture();
+	if(activeTexture < TEXTURE_COUNT) {
+		set_texture(); 
+	}
+	else {
+#ifdef _ANT_ENABLE
+	glUseProgram(programs[PROGRAM_RENDER]);
+#endif
+		// Enable GT calculations
+		glUniform1f(glGetUniformLocation(programs[PROGRAM_RENDER],
+		                                 "uGroundTruth"),
+		            1.f);
+#ifdef _ANT_ENABLE
+		glUseProgram(0);
+#endif
+	}
 }
 
 static void TW_CALL get_texture_cb(void *value, void *clientData) {
@@ -421,7 +439,6 @@ void on_init() {
 	                       "grid.glsl",
 	                       "",
 	                       GL_TRUE);
-	glUseProgram(programs[PROGRAM_RENDER]);
 	set_texture();
 	set_tile_size();
 
@@ -490,12 +507,13 @@ void on_init() {
 	           "help='Change texture filtering method.' ");
 
 	TwEnumVal textureEV[] = {
-		{TEXTURE_CHESSBOARD, "Chessboard"},
+		{TEXTURE_LOD,        "LOD"},
 		{TEXTURE_WOOD,       "Wood" },
 		{TEXTURE_GRASS,      "Grass"},
-		{TEXTURE_LOD,        "LOD"}
+		{TEXTURE_CHESSBOARD, "Chess"},
+		{TEXTURE_COUNT,      "ChessGT"}
 	};
-	TwType textureType= TwDefineEnum("Texture", textureEV, 4);
+	TwType textureType= TwDefineEnum("Texture", textureEV, 5);
 	TwAddVarCB(menuBar,
 	           "texture",
 	           textureType,

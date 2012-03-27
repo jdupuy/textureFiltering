@@ -10,8 +10,19 @@ uniform mat4 uModelViewProjection;
 
 uniform float uTileSize;
 uniform float uTextureOffset;
+uniform float uGroundTruth;
 
 #define PI 3.14159265
+
+// chessboard texture
+float chessboard(vec2 p) {
+	float sx1 = step(0.0,p.x) - step(0.5,p.x);
+	float sy1 = step(0.5,p.y) - step(1.0,p.y);
+	float sx2 = step(0.5,p.x) - step(1.0,p.x);
+	float sy2 = step(0.0,p.y) - step(0.5,p.y);
+	return sx1*sy1+sx2*sy2;
+}
+
 
 #ifdef _VERTEX_
 layout(location=0) in vec2 iPosition; // NDC position
@@ -69,7 +80,9 @@ layout(location=0) out vec4 oColour;
 
 void main() {
 	oColour = texture(sDiffuse, iTexCoord);
-//	oColour = vec4(abs(dFdx(iTexCoord.x)))*5.0;
+
+	if(uGroundTruth>0.0f)
+		oColour = vec4(chessboard(mod(iTexCoord,1.0)));
 }
 #endif
 
