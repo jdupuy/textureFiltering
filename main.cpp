@@ -534,11 +534,11 @@ void on_init() {
 	           &scrollSpeed,
 	           "step=0.1 min=-50.0 max=50.0");
 
-	TwAddButton( menuBar,
-	             "reset camera",
-	             &set_camera,
-	             NULL,
-	             "");
+	TwAddButton(menuBar,
+	            "reset camera",
+	            &set_camera,
+	            NULL,
+	            "");
 
 #endif // _ANT_ENABLE
 	fw::check_gl_error();
