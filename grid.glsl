@@ -10,11 +10,24 @@ uniform mat4 uModelViewProjection;
 
 uniform float uTileSize;
 uniform float uTextureOffset;
+
+// ground truth specific computation
 uniform float uGroundTruth;
+uniform vec2 uInvHalfResolution;
 
 #define PI 3.14159265
 
-// chessboard texture
+// line procedural texture
+float line(vec2 p) {
+	return step(0.0,p.x) - step(0.5,p.x);
+}
+
+float line_intxz(float a, float b) {
+	return 1;
+}
+
+
+// chessboard procedural texture
 float chessboard(vec2 p) {
 	float sx1 = step(0.0,p.x) - step(0.5,p.x);
 	float sy1 = step(0.5,p.y) - step(1.0,p.y);
@@ -23,20 +36,33 @@ float chessboard(vec2 p) {
 	return sx1*sy1+sx2*sy2;
 }
 
+// ray trace horiztonal plane
+vec3 ndc_plane(vec2 ndc, out float t) {
+	vec3 rayDir = normalize(
+	              uEyeAxis[2]
+	            + uTanFov.x * ndc.x * uEyeAxis[0]
+	            + uTanFov.y * ndc.y * uEyeAxis[1]);
+	t = -uEyePos.y / rayDir.y;
+	return uEyePos + t*rayDir;
+}
+
+// ray trace horiztonal plane
+vec3 ndc_plane(vec2 ndc) {
+	vec3 rayDir = normalize(
+	              uEyeAxis[2]
+	            + uTanFov.x * ndc.x * uEyeAxis[0]
+	            + uTanFov.y * ndc.y * uEyeAxis[1]);
+	float t = -uEyePos.y / rayDir.y;
+	return uEyePos + t*rayDir;
+}
+
 
 #ifdef _VERTEX_
 layout(location=0) in vec2 iPosition; // NDC position
 
 void main() {
 	// compute world space ray dir
-	vec3 rayDir = normalize(
-	              uEyeAxis[2]
-	            + uTanFov.x * iPosition.x * uEyeAxis[0]
-	            + uTanFov.y * iPosition.y * uEyeAxis[1]);
-
-	// test against plane
-	float t     = -uEyePos.y / rayDir.y;
-	gl_Position = vec4(uEyePos + t*rayDir, t);
+	gl_Position.xyz = ndc_plane(iPosition, gl_Position.w);
 }
 #endif
 
@@ -48,7 +74,7 @@ out vec2 gsTexCoord;
 #	define oTexCoord gsTexCoord
 
 void main() {
-	// make sure the vertices are all in front of the camera
+	// make sure the vertices are all in front of the view volume
 	bvec3 t;
 	t.x = (0.0 > gl_in[0].gl_Position.w);
 	t.y = (0.0 > gl_in[1].gl_Position.w);
@@ -81,8 +107,25 @@ layout(location=0) out vec4 oColour;
 void main() {
 	oColour = texture(sDiffuse, iTexCoord);
 
-	if(uGroundTruth>0.0f)
-		oColour = vec4(chessboard(mod(iTexCoord,1.0)));
+	if(uGroundTruth>0.0f) {
+//		oColour = vec4(chessboard(mod(iTexCoord,1.0)));
+		oColour = vec4(line(mod(iTexCoord,1.0)));
+	
+		// fragment footprint in NDC
+		vec2 fmin = gl_FragCoord.xy*uInvHalfResolution-1.0;
+		vec2 fmax = fmin+vec2(1)*uInvHalfResolution;
+
+		// get world space translated to camera origin
+		// (this is to make sure the z values will have the same sign)
+		vec3 pmin = ndc_plane(fmin)+uEyePos;
+		float t = 0.0;
+		vec3 pmax = ndc_plane(fmax,t)+uEyePos;
+		if(t<0.0)
+			oColour.rgb = vec3(1,0,0);
+
+		// integrate
+		
+	}
 }
 #endif
 

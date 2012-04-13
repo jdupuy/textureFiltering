@@ -61,6 +61,7 @@ enum {
 	TEXTURE_WOOD,
 	TEXTURE_GRASS,
 	TEXTURE_CHESSBOARD,
+	TEXTURE_LINE,
 	TEXTURE_COUNT,
 
 	// programs
@@ -87,7 +88,7 @@ bool mouseRight = false;
 
 GLfloat deltaTicks  = 0.0f;
 GLfloat tileSize    = 100.0f;  // controls the size of the tile
-GLfloat scrollSpeed = 1.0f;    // scrolling speed
+GLfloat scrollSpeed = 5.0f;    // scrolling speed
 GLuint gridSize     = 8;       // controls the size (pixels) of the grid triangles 
 GLuint gridVertexCount = 0;
 GLuint gridIndexCount  = 0;
@@ -359,6 +360,8 @@ void on_init() {
 	// configure texture
 	glActiveTexture(GL_TEXTURE0+TEXTURE_CHESSBOARD);
 		build_texture(fw::Tga("chessboard.tga"), TEXTURE_CHESSBOARD);
+	glActiveTexture(GL_TEXTURE0+TEXTURE_LINE);
+		build_texture(fw::Tga("line.tga"), TEXTURE_LINE);
 	glActiveTexture(GL_TEXTURE0+TEXTURE_WOOD);
 		build_texture(fw::Tga("wood.tga"), TEXTURE_WOOD);
 	glActiveTexture(GL_TEXTURE0+TEXTURE_GRASS);
@@ -387,9 +390,6 @@ void on_init() {
 	glSamplerParameteri(samplers[SAMPLER_TRILINEAR],
 	                    GL_TEXTURE_MIN_FILTER,
 	                    GL_LINEAR_MIPMAP_LINEAR);
-//	glSamplerParameteri(samplers[SAMPLER_TRILINEAR],
-//	                    GL_TEXTURE_WRAP_S,
-//	                    GL_CLAMP_TO_EDGE);
 
 	glSamplerParameteri(samplers[SAMPLER_ANISOTROPICX2],
 	                    GL_TEXTURE_MAG_FILTER,
@@ -464,11 +464,11 @@ void on_init() {
 	           &speed,
 	           "");
 
-	TwAddButton( menuBar,
-	             "fullscreen",
-	             &toggle_fullscreen,
-	             NULL,
-	             "label='toggle fullscreen'");
+	TwAddButton(menuBar,
+	            "fullscreen",
+	            &toggle_fullscreen,
+	            NULL,
+	            "label='toggle fullscreen'");
 
 	TwAddVarRW(menuBar,
 	           "wireframe",
@@ -476,17 +476,17 @@ void on_init() {
 	           &wireframe,
 	           "true='ON' false='OFF'");
 
-	TwAddSeparator( menuBar,
-	                "options",
-	                NULL );
+	TwAddSeparator(menuBar,
+	               "options",
+	               NULL );
 
-	TwAddVarCB( menuBar,
-	            "tileFactor",
-	            TW_TYPE_FLOAT,
-	            &set_tile_size_cb,
-	            &get_tile_size_cb,
-	            NULL,
-	            "min=1.0 max=500.0 step=1.0");
+	TwAddVarCB(menuBar,
+	           "tileFactor",
+	           TW_TYPE_FLOAT,
+	           &set_tile_size_cb,
+	           &get_tile_size_cb,
+	           NULL,
+	           "min=1.0 max=500.0 step=1.0");
 
 	TwEnumVal samplerModeEV[] = {
 		{SAMPLER_LINEAR,         "Linear"},
@@ -497,7 +497,7 @@ void on_init() {
 		{SAMPLER_ANISOTROPICX8,  "Anisotropic x8"},
 		{SAMPLER_ANISOTROPICX16, "Anisotropic x16"}
 	};
-	TwType filterType= TwDefineEnum("Filter", samplerModeEV, 7);
+	TwType filterType = TwDefineEnum("Filter", samplerModeEV, 7);
 	TwAddVarCB(menuBar,
 	           "filtering",
 	           filterType,
@@ -511,9 +511,10 @@ void on_init() {
 		{TEXTURE_WOOD,       "Wood" },
 		{TEXTURE_GRASS,      "Grass"},
 		{TEXTURE_CHESSBOARD, "Chess"},
-		{TEXTURE_COUNT,      "ChessGT"}
+		{TEXTURE_COUNT,      "ChessGT"},
+		{TEXTURE_LINE,       "Line"}
 	};
-	TwType textureType= TwDefineEnum("Texture", textureEV, 5);
+	TwType textureType= TwDefineEnum("Texture", textureEV, 6);
 	TwAddVarCB(menuBar,
 	           "texture",
 	           textureType,
@@ -686,7 +687,10 @@ void on_resize(GLint w, GLint h) {
 	glUniform2f(glGetUniformLocation(programs[PROGRAM_RENDER],
 	                                         "uTanFov"),
 	                   tan(FOVY*0.5f)*float(w)/float(h),
-	                   tan(FOVY*0.5f) );
+	                   tan(FOVY*0.5f));
+	glUniform2f(glGetUniformLocation(programs[PROGRAM_RENDER],
+	                                         "uInvHalfResolution"),
+	                   2.f/float(w), 2.f/float(h));
 #ifdef _ANT_ENABLE
 	glUseProgram(0);
 #endif // _ANT_ENABLE
@@ -807,8 +811,7 @@ int main(int argc, char** argv) {
 	// init glew
 	glewExperimental = GL_TRUE; // segfault on GenVertexArrays on Nvidia otherwise
 	GLenum err = glewInit();
-	if(GLEW_OK != err)
-	{
+	if(GLEW_OK != err) {
 		std::stringstream ss;
 		ss << err;
 		std::cerr << "glewInit() gave error " << ss.str() << std::endl;
@@ -829,14 +832,12 @@ int main(int argc, char** argv) {
 	glutMouseWheelFunc(&on_mouse_wheel);
 
 	// run
-	try
-	{
+	try {
 		// run demo
 		on_init();
 		glutMainLoop();
 	}
-	catch(std::exception& e)
-	{
+	catch(std::exception& e) {
 		std::cerr << "Fatal exception: " << e.what() << std::endl;
 		return 1;
 	}
