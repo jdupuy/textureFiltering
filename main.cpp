@@ -86,6 +86,7 @@ Projection cameraProjection = Projection::Perspective(FOVY,
 bool mouseLeft  = false;
 bool mouseRight = false;
 
+GLfloat angle       = 0.0f;
 GLfloat deltaTicks  = 0.0f;
 GLfloat tileSize    = 100.0f;  // controls the size of the tile
 GLfloat scrollSpeed = 5.0f;    // scrolling speed
@@ -99,7 +100,7 @@ bool wireframe         = false;
 bool scrollTexture     = false;
 
 #ifdef _ANT_ENABLE
-float speed = 0.0f; // app speed (in ms)
+GLfloat speed = 0.0f; // app speed (in ms)
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -442,8 +443,8 @@ void on_init() {
 	set_texture();
 	set_tile_size();
 
-//	glCullFace(GL_FRONT);
-//	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+	glEnable(GL_CULL_FACE);
 
 #ifdef _ANT_ENABLE
 	// start ant
@@ -534,6 +535,12 @@ void on_init() {
 	           TW_TYPE_FLOAT,
 	           &scrollSpeed,
 	           "step=0.1 min=-50.0 max=50.0");
+
+	TwAddVarRW(menuBar,
+	           "angle",
+	           TW_TYPE_FLOAT,
+	           &angle,
+	           "step=0.01 min=0.0 max=7.0");
 
 	TwAddButton(menuBar,
 	            "reset camera",
@@ -637,6 +644,10 @@ void on_update() {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+glUniform1f(glGetUniformLocation(programs[PROGRAM_RENDER],
+		                                 "uAngle"),
+		            angle);
 
 	// draw
 	glDrawElements(GL_TRIANGLES,
