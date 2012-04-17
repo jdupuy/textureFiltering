@@ -32,10 +32,10 @@ float line(vec2 p, float theta) {
 }
 
 float line_int(vec2 xb, vec2 pq) {
-	// precompute steps
+	// precompute
 	vec2 xb2 = 4.0*xb*xb;
 	vec4 h = step(vec4(10.5,0,10.5,0), xb.xxyy);
-	return 1.125*(pq.x-pq.y)*(h.z + h.w*xb2.y
+	return 0.125*(pq.x-pq.y)*(h.z + h.w*xb2.y
 	                              - h.z*xb2.y
 	                              - h.y*xb2.x
 	                              + h.x*xb2.x
@@ -72,16 +72,16 @@ vec3 ndc_plane(vec2 ndc) {
 	return uEyePos + t*rayDir;
 }
 
-// ray trace plane in eye space
-vec3 ndc_plane_eye(vec2 ndc) {
-	vec3 rayDir = normalize(vec3(uTanFov.x*ndc.x,
-	                             uTanFov.y*ndc.y,
-	                             -1)); // view space ray dir
-//	vec3 p  = -uEyePos.y;           // point on plane
-	vec3 n  = inverse(uEyeAxis)[1]; // normal to plane
-	float t = -n.y*uEyePos.y / dot(rayDir, n);
-	return t*rayDir;
-}
+//// ray trace plane in eye space
+//vec3 ndc_plane_eye(vec2 ndc) {
+//	vec3 rayDir = normalize(vec3(uTanFov.x*ndc.x,
+//	                             uTanFov.y*ndc.y,
+//	                             -1)); // view space ray dir
+////	vec3 p  = -uEyePos.y;           // point on plane
+//	vec3 n  = inverse(uEyeAxis)[1]; // normal to plane
+//	float t = -n.y*uEyePos.y / dot(rayDir, n);
+//	return t*rayDir;
+//}
 
 #ifdef _VERTEX_
 layout(location=0) in vec2 iPosition; // NDC position
@@ -137,24 +137,29 @@ void main() {
 //		oColour = vec4(chessboard(mod(iTexCoord,1.0)));
 //		oColour = vec4(line(mod(iTexCoord,1.0)));
 //		oColour = vec4(line(iTexCoord, PI*0.25));
-	
+
+		// make sure this is never a null vector
+		vec2 fwd = normalize(uEyeAxis[2].xz);
+		float angle = atan(fwd.x,fwd.y);
+		float c = cos(angle);
+		float s = sin(angle);
+		mat2 R  = mat2(c,s,
+		              -s,c);
+
 		// fragment footprint in NDC
 		vec2 fmin = gl_FragCoord.xy*uInvHalfResolution-1.0;
-		vec2 fmax = fmin+vec2(1)*uInvHalfResolution;
+		vec2 fmax = fmin + uInvHalfResolution;
 
-		// get world space translated to camera origin
-		// (this is to make sure the z values will have the same sign)
-		vec3 pmin = ndc_plane_eye(fmin);
-//		float t = 0.0;
-//		vec3 pmax = ndc_plane_eye(fmax,t);
-		vec3 pmax = ndc_plane_eye(fmax);
-//		if(t<0.01)
-//			oColour.rgb = vec3(1,0,0);
+		// get world space footprint
+		vec2 p1 = R * (ndc_plane(fmin).xz);
+		vec2 p2 = R * (ndc_plane(fmax).xz);
 
-		oColour = vec4(line_int(vec2(pmin.z, pmax.z),
-		                        vec2(pmin.x/pmin.z, pmax.x/pmax.z)))*1000.0;
+		// integrate
+		oColour = -vec4(line_int(vec2(p1.y,p2.y),
+		                         vec2(p1.x/p1.y,p2.x/p2.y) ));
 
-		oColour = vec4(line(iTexCoord, uAngle));
+//		oColour = vec4(line(iTexCoord, uAngle));
+//		oColour = vec4(p1.y - p2.y);
 
 	}
 }

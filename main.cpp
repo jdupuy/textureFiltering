@@ -34,7 +34,7 @@
 
 // Constants
 const float PI   = 3.14159265;
-const float FOVY = PI*0.5f;
+const float FOVY = PI*0.25f;
 
 enum {
 	// buffers
@@ -96,6 +96,7 @@ GLuint gridIndexCount  = 0;
 GLuint activeTexture   = TEXTURE_CHESSBOARD; // displayed texture
 GLuint activeSampler   = SAMPLER_TRILINEAR; // texture filtering method
 
+bool freeze            = false;
 bool wireframe         = false;
 bool scrollTexture     = false;
 
@@ -443,8 +444,8 @@ void on_init() {
 	set_texture();
 	set_tile_size();
 
-	glCullFace(GL_FRONT);
-	glEnable(GL_CULL_FACE);
+//	glCullFace(GL_FRONT);
+//	glEnable(GL_CULL_FACE);
 
 #ifdef _ANT_ENABLE
 	// start ant
@@ -454,7 +455,7 @@ void on_init() {
 
 	// Create a new bar
 	TwBar* menuBar = TwNewBar("menu");
-	TwDefine("menu size='220 190'");
+	TwDefine("menu size='220 220'");
 	TwDefine("menu position='0 0'");
 	TwDefine("menu alpha='255'");
 	TwDefine("menu valueswidth=85");
@@ -535,6 +536,12 @@ void on_init() {
 	           TW_TYPE_FLOAT,
 	           &scrollSpeed,
 	           "step=0.1 min=-50.0 max=50.0");
+
+	TwAddVarRW(menuBar,
+	           "freeze",
+	           TW_TYPE_BOOLCPP,
+	           &freeze,
+	           "true='ON' false='OFF'");
 
 	TwAddVarRW(menuBar,
 	           "angle",
@@ -630,15 +637,18 @@ void on_update() {
 	                   1,
 	                   0,
 	                   reinterpret_cast<float*>(&mvp));
-	glUniformMatrix3fv(glGetUniformLocation(programs[PROGRAM_RENDER],
-	                                         "uEyeAxis"),
-	                   1,
-	                   0,
-	                   reinterpret_cast<float*>(&camAxis));
-	glUniform3fv(glGetUniformLocation(programs[PROGRAM_RENDER],
-	                                  "uEyePos"),
-	             1,
-	             reinterpret_cast<float*>(&camPos));
+
+	if(!freeze) {
+		glUniformMatrix3fv(glGetUniformLocation(programs[PROGRAM_RENDER],
+		                                         "uEyeAxis"),
+		                   1,
+		                   0,
+		                   reinterpret_cast<float*>(&camAxis));
+		glUniform3fv(glGetUniformLocation(programs[PROGRAM_RENDER],
+		                                  "uEyePos"),
+		             1,
+		             reinterpret_cast<float*>(&camPos));
+	}
 
 	if(wireframe)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
