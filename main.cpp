@@ -34,7 +34,7 @@
 
 // Constants
 const float PI   = 3.14159265;
-const float FOVY = PI*0.25f;
+const float FOVY = PI*0.5f;
 
 enum {
 	// buffers
