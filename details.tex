@@ -1,0 +1,29 @@
+\documentclass[11pt,a4paper,oneside]{report}
+\usepackage{amsmath}
+
+\begin{document}
+\author{Jonathan Dupuy}
+
+Let $f$ be the following function:
+\begin{align*}
+	f(x) &= 1 - H(x - \lfloor x \rfloor - \frac{1}{2}) \\
+	     &= \left\{
+  \begin{array}{l l}
+	1 & \quad \text{if} \quad 0 \leq x - \lfloor x \rfloor < \frac{1}{2} \\
+	0 & \quad \text{otherwise}\\
+  \end{array} \right.
+\end{align*}
+Where $H(x)$ is the Heaviside step function. 
+$f$ can be integrated: 
+\begin{equation*}
+	\int f(x) \; \mathrm{d}x =  F(x) = 
+	\left\{
+	\begin{array}{l l}
+	\displaystyle x - \frac{\lfloor x \rfloor}{2} & \quad \text{if} \quad 0 \leq x - \lfloor x \rfloor < \frac{1}{2} \\
+	\displaystyle \frac{\lfloor x \rfloor + 1}{2} & \quad \text{otherwise}\\
+	\end{array} \right.
+\end{equation*}
+
+
+\end{document}
+
