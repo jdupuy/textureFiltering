@@ -42,6 +42,10 @@ float line_int(vec2 xb, vec2 pq) {
 	                              - h.x);
 }
 
+//float line_int2(vec2 bounds, vec2 angles) {
+//	
+//}
+
 
 // chessboard procedural texture
 float chessboard(vec2 p) {
@@ -136,7 +140,7 @@ void main() {
 	if(uGroundTruth>0.0f) {
 //		oColour = vec4(chessboard(mod(iTexCoord,1.0)));
 //		oColour = vec4(line(mod(iTexCoord,1.0)));
-//		oColour = vec4(line(iTexCoord, PI*0.25));
+		oColour = vec4(line(iTexCoord, uAngle));
 
 		// make sure this is never a null vector
 		vec2 fwd = normalize(uEyeAxis[2].xz);
@@ -150,13 +154,16 @@ void main() {
 		vec2 fmin = gl_FragCoord.xy*uInvHalfResolution-1.0;
 		vec2 fmax = fmin + uInvHalfResolution;
 
-		// get world space footprint
+		// get world space footprint rotated towards camera hdir
 		vec2 p1 = R * (ndc_plane(fmin).xz);
 		vec2 p2 = R * (ndc_plane(fmax).xz);
 
-		// integrate
-		oColour = -vec4(line_int(vec2(p1.y,p2.y),
-		                         vec2(p1.x/p1.y,p2.x/p2.y) ));
+		// comput angles
+		float theta1 = p1.x/p1.y;
+		float theta2 = p2.x/p2.y;
+
+//		if(abs(theta1 - theta2)<0.01)
+//			oColour = vec4(1,0,0,0);
 
 //		oColour = vec4(line(iTexCoord, uAngle));
 //		oColour = vec4(p1.y - p2.y);
