@@ -31,7 +31,7 @@ We have to solve the following integral:
 	I := 
 	\frac{1}{b-a}\int_{a}^{b} 
 	\frac{1}{(j-i)z}
-	\int_{jz}^{iz}
+	\int_{iz}^{jz}
 	f(x) \; \textrm{d}x \; \textrm{d}z
 \end{equation*}
 If we can solve this integral analytically, then we'll have a ground truth 
@@ -76,7 +76,8 @@ image. So let's see how things work out:
 	\end{array} \right. \\
 	\end{array} \right. \! \textrm{d}z
 \end{align*}
-We have to find a continuous primitive for each case, dependent on z.
+The last step is to find a continuous primitive for this integral, which depends
+on three parameters...
 
 
 \end{document}
