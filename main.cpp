@@ -486,11 +486,11 @@ void on_init() {
 	           &set_tile_size_cb,
 	           &get_tile_size_cb,
 	           NULL,
-	           "min=1.0 max=500.0 step=1.0");
+	           "min=1.0 max=1000.0 step=1.0");
 
 	TwEnumVal samplerModeEV[] = {
 		{SAMPLER_LINEAR,         "Linear"},
-		{SAMPLER_BILINEAR,       "Bilinear" },
+		{SAMPLER_BILINEAR,       "Bilinear"},
 		{SAMPLER_TRILINEAR,      "Trilinear"},
 		{SAMPLER_ANISOTROPICX2,  "Anisotropic x2"},
 		{SAMPLER_ANISOTROPICX4,  "Anisotropic x4"},
@@ -533,7 +533,7 @@ void on_init() {
 	           "scroll speed",
 	           TW_TYPE_FLOAT,
 	           &scrollSpeed,
-	           "step=0.1 min=-50.0 max=50.0");
+	           "step=0.1 min=-100.0 max=100.0");
 
 	TwAddButton(menuBar,
 	            "reset camera",
