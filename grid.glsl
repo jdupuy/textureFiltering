@@ -23,7 +23,7 @@ float line(vec2 p) {
 }
 
 float line_intxz(float a, float b) {
-	return 1;
+	return 1.0;
 }
 
 
