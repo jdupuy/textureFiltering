@@ -1,0 +1,84 @@
+\documentclass[11pt,a4paper,oneside]{report}
+\usepackage{amsmath}
+
+\begin{document}
+\author{Jonathan Dupuy}
+
+Let $f$ be the following function:
+\begin{align*}
+	f(x) &= 1 - H(x - \lfloor x \rfloor - \frac{1}{2}) \\
+	     &= \left\{
+	\begin{array}{l l}
+	1 & \quad \text{if} \quad 0 \leq x - \lfloor x \rfloor < \frac{1}{2} \\
+	0 & \quad \text{otherwise}\\
+	\end{array} \right.
+\end{align*}
+Where $H(x)$ is the Heaviside Step Function. 
+$f$ can be integrated: 
+\begin{equation*}
+	\int f(x) \; \mathrm{d}x =  F(x) = 
+	\left\{
+	\begin{array}{l l}
+	\displaystyle x - \frac{\lfloor x \rfloor}{2} & \quad \text{if} \quad 0 \leq x - \lfloor x \rfloor < \frac{1}{2} \\
+	\displaystyle \frac{\lfloor x \rfloor + 1}{2} & \quad \text{otherwise}\\
+	\end{array} \right.
+\end{equation*}
+
+Now let's see how to integrate this inside a trapezium (eg the projection of a 
+perspective frustum on a plane).
+We have to solve the following integral:
+\begin{equation*}
+	I := 
+	\frac{1}{b-a}\int_{a}^{b} 
+	\frac{1}{(j-i)z}
+	\int_{iz}^{jz}
+	f(x) \; \textrm{d}x \; \textrm{d}z
+\end{equation*}
+If we can solve this integral analytically, then we'll have a ground truth 
+image. So let's see how things work out:
+\begin{align*}
+	I &= \frac{1}{b-a}\int_{a}^{b} 
+	     \frac{F(jz) - F(iz)}{(j-i)z} \; \textrm{d}z \\
+	  &= \frac{1}{b-a}\int_{a}^{b} \frac{1}{(j-i)z}
+	\left\{
+	\begin{array}{cccc}
+	\displaystyle 
+	(j-i)z + \frac{\lfloor iz  \rfloor-\lfloor jz \rfloor}{2} 
+	\, & \text{if} \;
+	\left\{
+	\begin{array}{ll}
+	0\leq iz - \lfloor iz \rfloor < 1/2 \\
+	0\leq jz - \lfloor jz \rfloor < 1/2
+	\end{array} \right. \\
+	\displaystyle 
+	-iz + \frac{\lfloor jz  \rfloor+\lfloor iz \rfloor+1}{2} 
+	\, & \text{if} \;
+	\left\{
+	\begin{array}{cc}
+	0 \leq iz - \lfloor iz \rfloor < 1/2 \\
+	1/2 \leq jz - \lfloor jz \rfloor < 1
+	\end{array} \right. \\
+	\displaystyle 
+	jz - \frac{\lfloor jz  \rfloor+\lfloor iz \rfloor+1}{2} 
+	\, & \text{if} \;
+	\left\{
+	\begin{array}{cc}
+	1/2 \leq iz - \lfloor iz \rfloor < 1 \\
+	0 \leq jz - \lfloor jz \rfloor < 1/2
+	\end{array} \right. \\
+	\displaystyle 
+	\frac{\lfloor jz \rfloor-\lfloor iz \rfloor}{2} 
+	\, & \text{if} \;
+	\left\{
+	\begin{array}{ll}
+	1/2\leq iz - \lfloor iz \rfloor < 1 \\
+	1/2\leq jz - \lfloor jz \rfloor < 1
+	\end{array} \right. \\
+	\end{array} \right. \! \textrm{d}z
+\end{align*}
+The last step is to find a continuous primitive for this integral, which depends
+on three parameters...
+
+
+\end{document}
+
