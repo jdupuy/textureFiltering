@@ -444,9 +444,6 @@ void on_init() {
 	set_texture();
 	set_tile_size();
 
-//	glCullFace(GL_FRONT);
-//	glEnable(GL_CULL_FACE);
-
 #ifdef _ANT_ENABLE
 	// start ant
 	TwInit(TW_OPENGL, NULL);

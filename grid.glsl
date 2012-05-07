@@ -138,9 +138,9 @@ void main() {
 	oColour = texture(sDiffuse, iTexCoord);
 
 	if(uGroundTruth>0.0f) {
-//		oColour = vec4(chessboard(mod(iTexCoord,1.0)));
+		oColour = vec4(chessboard(mod(iTexCoord,1.0)));
 //		oColour = vec4(line(mod(iTexCoord,1.0)));
-		oColour = vec4(line(iTexCoord, uAngle));
+//		oColour = vec4(line(iTexCoord, uAngle));
 
 		// make sure this is never a null vector
 		vec2 fwd = normalize(uEyeAxis[2].xz);
